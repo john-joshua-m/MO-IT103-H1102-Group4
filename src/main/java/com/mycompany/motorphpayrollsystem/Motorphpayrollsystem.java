@@ -277,11 +277,11 @@ public double calculateWithholdingTax(double monthlyTaxableIncome) {
     return tax;
 }
 
-
  /*
  This is our net salary calculator, when used, it prints all the other information
  from the payslip. 
  */
+
 
 public String calculateNetSalary(int employeeId) {
     Employee employee = getEmployeeById(employeeId);
