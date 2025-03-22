@@ -284,10 +284,6 @@ public double calculateWithholdingTax(double monthlyTaxableIncome) {
  */
 
 
-
-
-
-
 public String calculateNetSalary(int employeeId) {
     Employee employee = getEmployeeById(employeeId);
 

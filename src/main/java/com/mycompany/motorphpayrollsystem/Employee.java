@@ -59,9 +59,6 @@ public class Employee {
     }
     
     
-    
-
-
     public void addRenderedHours(double hours) {
         if (hours <= 0) {
             System.out.println("Invalid input: Hours should be positive.");
