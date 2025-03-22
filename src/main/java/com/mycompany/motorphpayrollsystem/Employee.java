@@ -58,8 +58,7 @@ public class Employee {
         this.overtimeHours += hours;
     }
     
-    
-    
+      
     
     public void addRenderedHours(double hours) {
         if (hours <= 0) {
@@ -83,7 +82,4 @@ public class Employee {
         overtimeHours = 0;
     }
 }
-
-
-
 
