@@ -1,0 +1,35 @@
+# Set default behavior to automatically detect text files and normalize line endings
+* text=auto
+
+# Force LF line endings for Java files
+*.java text eol=lf
+
+# Force LF line endings for XML files (common in Maven projects)
+*.xml text eol=lf
+
+# Force LF line endings for text files
+*.txt text eol=lf
+
+# Force LF line endings for properties files
+*.properties text eol=lf
+
+# Force LF line endings for shell scripts
+*.sh text eol=lf
+
+# Force LF line endings for javascript files.
+*.js text eol=lf
+
+# Force LF line endings for HTML and CSS files.
+*.html text eol=lf
+*.css text eol=lf
+
+# Binary files (no line ending conversion)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.jar binary
+*.exe binary
+*.dll binary
