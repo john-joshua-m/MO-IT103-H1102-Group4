@@ -262,19 +262,19 @@ for deductions. The contributionRate then contains the percentage of the deducti
 public double calculateWithholdingTax(double monthlyTaxableIncome) {
     double tax = 0.0;
 
-    if (monthlyTaxableIncome >= 48462) {
-        tax = 15514.88 + (0.40 * (monthlyTaxableIncome - 48462));
-    } else if (monthlyTaxableIncome >= 26923) {
-        tax = 7507.03 + (0.35 * (monthlyTaxableIncome - 26923));
-    } else if (monthlyTaxableIncome >= 13462) {
-        tax = 3135.63 + (0.32 * (monthlyTaxableIncome - 13462));
-    } else if (monthlyTaxableIncome >= 6730) {
-        tax = 1205.63 + (0.30 * (monthlyTaxableIncome - 6730));
-    } else {
-        tax = 0.0;
-    }
+    if(monthlyTaxableIncome <= 20832){
+        tax = 0;
+   }else if(monthlyTaxableIncome >= 20833 || monthlyTaxableIncome < 33333){
+        tax = (monthlyTaxableIncome - 20833) * 0.20;
+   }else if(monthlyTaxableIncome >= 33333 || monthlyTaxableIncome < 66667){
+        tax = ((monthlyTaxableIncome - 33333) * 0.25) + 2500;
+   }else if(monthlyTaxableIncome >= 66667 || monthlyTaxableIncome < 166667){
+        tax = ((monthlyTaxableIncome - 66667) * 0.30) + 10833;
+   }else{
+       tax = ((monthlyTaxableIncome - 166667) * 0.32) + 40833.33;
+   }
 
-    return tax;
+return tax;
 }
 
  /*
