@@ -316,6 +316,17 @@ public String calculateNetSalary(int employeeId) {
             "Weekly Net Salary: " + weeklyNetSalary;
 }
 
+public void removeEmployeeById(int id) {
+    Employee employeeToRemove = getEmployeeById(id);
+    if (employeeToRemove != null) {
+        employees.remove(employeeToRemove);
+        System.out.println("Employee with ID " + id + " removed successfully.");
+    } else {
+        System.out.println("Employee with ID " + id + " not found.");
+    }
+}
+
+
 /*
 This is our main entry point for the system. This uses the Scanner class, it helps with
 displaying text fields to the console and with scanning inputs from users.
@@ -333,7 +344,9 @@ displaying text fields to the console and with scanning inputs from users.
             System.out.println("2. Set Rendered Hours");
             System.out.println("3. Add Overtime Hours");
             System.out.println("4. Add New Employee");
-            System.out.println("5. Exit");
+            System.out.println("5. Remove Employee"); 
+
+            System.out.println("6. Exit");
             System.out.print("Please press the number of your choice: ");
             choice = scanner.nextInt();
 
@@ -377,16 +390,21 @@ displaying text fields to the console and with scanning inputs from users.
     
     payrollSystem.employees.add(new Employee(newId, newRate, firstName, lastName));
     break;
-
-
             case 5:
+                System.out.print("Enter Employee ID to remove: ");
+                int removeId = scanner.nextInt();
+                payrollSystem.removeEmployeeById(removeId);
+                break;
+
+
+            case 6:
                 System.out.println("Exiting...");
                 break;
 
             default:
                 System.out.println("Invalid choice.");
         }
-    } while (choice != 5);
+    } while (choice != 6);
     scanner.close();
     }
     }
