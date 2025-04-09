@@ -1,81 +1,37 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.mycompany.motorphpayrollsystem;
 
-/**
- *
- * @author jjosh
- */
 
-/*
-Here are our import statements. We import different utilities
-needed in our system
-*/
-
-import java.util.ArrayList; 
 import java.util.List; 
 import java.util.Scanner; // Needed for console inputs and outputs
 import java.math.BigDecimal;  // Needed for accurate rounding
 import java.math.RoundingMode;  // Needed for round method used in returning values
 
 public class Motorphpayrollsystem {
-
     private List<Employee> employees;
+    private EmployeeManager employeeManager;
 
-    public Motorphpayrollsystem() {
-        this.employees = new ArrayList<>();
-        // Initialize employees directly in memory
-        employees.add(new Employee(10001, 535.71, "Manuel III", "Garcia"));
-        employees.add(new Employee(10002, 357.14, "Antonio", "Lim"));
-        employees.add(new Employee(10003, 357.14, "Bianca Sofia", "Aquino"));
-        employees.add(new Employee(10004, 357.14, "Isabella", "Reyes"));
-        employees.add(new Employee(10005, 313.51, "Eduard", "Hernandez"));
-        employees.add(new Employee(10006, 313.51, "Andrea Mae", "Villanueva"));
-        employees.add(new Employee(10007, 255.80, "Brad", "San Jose"));
-        employees.add(new Employee(10008, 133.93, "Alice", "Romualdez"));
-        employees.add(new Employee(10009, 133.93, "Rosie", "Atienza"));
-        employees.add(new Employee(10010, 313.51, "Roderick", "Alvaro"));
-        employees.add(new Employee(10011, 302.53, "Anthony", "Salcedo"));
-        employees.add(new Employee(10012, 229.02, "Josie", "Lopez"));
-        employees.add(new Employee(10013, 142.86, "Martha", "Farala"));
-        employees.add(new Employee(10014, 142.86, "Leila", "Martinez"));
-        employees.add(new Employee(10015, 318.45, "Fredrick", "Romualdez"));
-        employees.add(new Employee(10016, 255.80, "Christian", "Mata"));
-        employees.add(new Employee(10017, 249.11, "Selena", "De Leon"));
-        employees.add(new Employee(10018, 133.93, "Allison", "San Jose"));
-        employees.add(new Employee(10019, 133.93, "Cydney ", "Rosario"));
-        employees.add(new Employee(10020, 138.39, "Mark", "Bautista"));
-        employees.add(new Employee(10021, 138.39, "Darlene", "Lazaro"));
-        employees.add(new Employee(10022, 142.86, "Kolby", "Delos Santos"));
-        employees.add(new Employee(10023, 133.93, "Vella", "Santos"));
-        employees.add(new Employee(10024, 133.93, "Tomas", "Del Rosario"));
-        employees.add(new Employee(10025, 142.86, "Jacklyn", "Tolentino"));
-        employees.add(new Employee(10026, 147.32, "Percival", "Gutierrez"));
-        employees.add(new Employee(10027, 147.32, "Garfield", "Manalaysay"));
-        employees.add(new Employee(10028, 142.86, "Lizeth", "Villegas"));
-        employees.add(new Employee(10029, 133.93, "Carol", "Ramos"));
-        employees.add(new Employee(10030, 133.93, "Emelia", "Maceda"));
-        employees.add(new Employee(10031, 133.93, "Delia", "Aguilar"));
-        employees.add(new Employee(10032, 313.51, "John Rafael", "Castro"));
-        employees.add(new Employee(10033, 313.51, "Carlos Ian", "Martinez"));
-        employees.add(new Employee(10034, 313.51, "Beatriz", "Santos"));
+public Motorphpayrollsystem() {
+    this.employeeManager = new EmployeeManager();
+    this.employees = employeeManager.getEmployees();
+}
+    
+    
+    
+
+    public Employee getEmployeeById(int employeeId) {
+        for (Employee employee : employees) {
+            if (employee.getEmployeeId()== employeeId) {
+                return employee;
+            }
+        }
+        return null; // Return null if employee is not found
+    
     }
     
     public static double round(double value) {
         BigDecimal bd = new BigDecimal(Double.toString(value));
         bd = bd.setScale(2, RoundingMode.HALF_UP);
         return bd.doubleValue();
-    }
-
-    public Employee getEmployeeById(int employeeId) {
-        for (Employee employee : employees) {
-            if (employee.getEmployeeId() == employeeId) {
-                return employee;
-            }
-        }
-        return null;
     }
 
     public void calculateRenderedHours(int employeeId, double renderedHours) {
@@ -262,19 +218,19 @@ for deductions. The contributionRate then contains the percentage of the deducti
 public double calculateWithholdingTax(double monthlyTaxableIncome) {
     double tax = 0.0;
 
-    if(monthlyTaxableIncome <= 20832){
-        tax = 0;
-   }else if(monthlyTaxableIncome >= 20833 || monthlyTaxableIncome < 33333){
-        tax = (monthlyTaxableIncome - 20833) * 0.20;
-   }else if(monthlyTaxableIncome >= 33333 || monthlyTaxableIncome < 66667){
-        tax = ((monthlyTaxableIncome - 33333) * 0.25) + 2500;
-   }else if(monthlyTaxableIncome >= 66667 || monthlyTaxableIncome < 166667){
-        tax = ((monthlyTaxableIncome - 66667) * 0.30) + 10833;
-   }else{
-       tax = ((monthlyTaxableIncome - 166667) * 0.32) + 40833.33;
-   }
+   if (monthlyTaxableIncome <= 20832) {
+    tax = 0;
+} else if (monthlyTaxableIncome > 20832 && monthlyTaxableIncome < 33333) {
+    tax = (monthlyTaxableIncome - 20833) * 0.20;
+} else if (monthlyTaxableIncome >= 33333 && monthlyTaxableIncome < 66667) {
+    tax = ((monthlyTaxableIncome - 33333) * 0.25) + 2500;
+} else if (monthlyTaxableIncome >= 66667 && monthlyTaxableIncome < 166667) {
+    tax = ((monthlyTaxableIncome - 66667) * 0.30) + 10833;
+} else {
+    tax = ((monthlyTaxableIncome - 166667) * 0.32) + 40833.33;
+}
 
-return tax;
+    return tax;
 }
 
  /*
@@ -316,95 +272,136 @@ public String calculateNetSalary(int employeeId) {
             "Weekly Net Salary: " + weeklyNetSalary;
 }
 
-public void removeEmployeeById(int id) {
-    Employee employeeToRemove = getEmployeeById(id);
-    if (employeeToRemove != null) {
-        employees.remove(employeeToRemove);
-        System.out.println("Employee with ID " + id + " removed successfully.");
-    } else {
-        System.out.println("Employee with ID " + id + " not found.");
-    }
-}
-
-
 /*
 This is our main entry point for the system. This uses the Scanner class, it helps with
 displaying text fields to the console and with scanning inputs from users.
 */
 
     public static void main(String[] args) {
+        EmployeeManager employeeManager = new EmployeeManager();
         Motorphpayrollsystem payrollSystem = new Motorphpayrollsystem();
-        Scanner scanner = new Scanner(System.in);
-        int choice;
-        int id;
-
-        do {
-            System.out.println("\nPayroll System Menu:");
-            System.out.println("1. Calculate Net Salary");
-            System.out.println("2. Set Rendered Hours");
-            System.out.println("3. Add Overtime Hours");
-            System.out.println("4. Add New Employee");
-            System.out.println("5. Remove Employee"); 
-
-            System.out.println("6. Exit");
-            System.out.print("Please press the number of your choice: ");
-            choice = scanner.nextInt();
-
-             switch (choice) {
-            case 1:
-                System.out.print("Employee ID: ");
-                id = scanner.nextInt();
-                String deductions = payrollSystem.calculateNetSalary(id); 
-                System.out.println(deductions);
-                break;
-
-
-            case 2:
-                System.out.print("Enter Employee ID: ");
-                id = scanner.nextInt();
-                System.out.print("Enter Rendered Hours: ");
-                double hours = scanner.nextDouble();
-                payrollSystem.calculateRenderedHours(id, hours);
-                System.out.println("Rendered hours updated."); 
-                break;
-
-            case 3:
-                System.out.print("Enter Employee ID: ");
-                id = scanner.nextInt();
-                System.out.print("Enter Overtime Hours: ");
-                hours = scanner.nextDouble();
-                payrollSystem.addOvertimeHours(id, hours);
-                System.out.println("Overtime hours updated."); 
-                break;
-
-            case 4:
-                System.out.print("Enter Employee ID: ");
-                int newId = scanner.nextInt();
-                System.out.print("Enter Hourly Rate: ");
-                double newRate = scanner.nextDouble();
-                scanner.nextLine();
-                System.out.print("Enter First Name: ");
-                String firstName = scanner.nextLine();
-                System.out.print("Enter Last Name: ");
-                String lastName = scanner.nextLine();
     
-    payrollSystem.employees.add(new Employee(newId, newRate, firstName, lastName));
-    break;
-            case 5:
-                System.out.print("Enter Employee ID to remove: ");
-                int removeId = scanner.nextInt();
-                payrollSystem.removeEmployeeById(removeId);
-                break;
+        try (Scanner scanner = new Scanner(System.in)) {
+            int choice;
+            int id;
+            String firstName;
+            String lastName;
+            String birthday;
+            String position;
+            double hourlyRate;
+            double salary;
+            
+            do {
+                System.out.println("***************************************************************************");
+                System.out.println("\nPayroll System Menu:");
+                System.out.println("1. Calculate Net Salary");
+                System.out.println("2. Set Rendered Hours");
+                System.out.println("3. Add Overtime Hours");
+                System.out.println("4. Add New Employee");
+                System.out.println("5. View Employees");
+                System.out.println("6. Edit Employee Details");
+                System.out.println("7. Delete Employee");
+                System.out.println("8. Exit");
+                System.out.print("Please press the number of your choice: ");
+                choice = scanner.nextInt();
+                
+                
+                switch (choice) {
+                    case 1:
+                        System.out.println("***************************************************************************");
+                        System.out.print("\nEmployee ID: ");
+                        id = scanner.nextInt();
+                        scanner.nextLine();
+                        String deductions = payrollSystem.calculateNetSalary(id);
+                        System.out.println(deductions);
+                        break;
+                        
+                        
+                    case 2:
+                        System.out.println("***************************************************************************");
+                        System.out.print("\nEnter Employee ID: ");
+                        id = scanner.nextInt();
+                        System.out.print("Enter Rendered Hours: ");
+                        double hours = scanner.nextDouble();
+                        payrollSystem.calculateRenderedHours(id, hours);
+                        System.out.println("Rendered hours updated.");
+                        break;
+                        
+                    case 3:
+                        System.out.println("***************************************************************************");
+                        System.out.print("\nEnter Employee ID: ");
+                        id = scanner.nextInt();
+                        System.out.print("Enter Overtime Hours: ");
+                        hours = scanner.nextDouble();
+                        payrollSystem.addOvertimeHours(id, hours);
+                        System.out.println("Overtime hours updated.");
+                        break;
+                        
+                    case 4:
+                        System.out.println("***************************************************************************");
+                        System.out.print("\nEnter Employee ID: ");
+                        id = scanner.nextInt();
+                        scanner.nextLine();
+                        System.out.print("Enter First Name: ");
+                        firstName = scanner.nextLine();
+                        System.out.print("Enter Last Name: ");
+                        lastName = scanner.nextLine();
+                        System.out.print("Birthday (MM/DD/YYYY): ");
+                        birthday = scanner.nextLine();
+                        System.out.print("Enter Position: ");
+                        position = scanner.nextLine();
+                        System.out.print("Enter Hourly Rate: ");
+                        hourlyRate = scanner.nextDouble();
+                        System.out.print("Enter Salary: ");
+                        salary = scanner.nextDouble();
+                        employeeManager.addEmployee(id, firstName, lastName, birthday, position, hourlyRate, salary);
+                        break;
+                        
+                        
+                    case 5:
+                        System.out.println("***************************************************************************");
+                        employeeManager.viewEmployees();
+                        break;
+                        
+                    case 6:
+                        System.out.println("***************************************************************************");
+                         System.out.print("Enter Employee ID to edit: ");
+                    int editId = scanner.nextInt();
+                    scanner.nextLine();
+                    System.out.print("Enter new first name (leave blank to keep current): ");
+                    String newFirstName = scanner.nextLine();
+                    System.out.print("Enter new last name (leave blank to keep current): ");
+                    String newLastName = scanner.nextLine();
+                    System.out.print("Enter new birthday (leave blank to keep current): ");
+                    String newBirthday = scanner.nextLine();
+                    System.out.print("Enter new position (leave blank to keep current): ");
+                    String newPosition = scanner.nextLine();
+                    System.out.print("Enter new hourly rate (-1 to keep current): ");
+                    System.out.print("Enter new salary (-1 to keep current): ");
+                    double newHourlyRate = scanner.nextDouble();
+                    double newSalary = scanner.nextDouble();
 
-
-            case 6:
-                System.out.println("Exiting...");
-                break;
-
-            default:
-                System.out.println("Invalid choice.");
+                    employeeManager.editEmployee(editId, newFirstName, newLastName, newBirthday, newPosition, newHourlyRate, newSalary);
+                    break;
+                    
+                    case 7:
+                        System.out.println("***************************************************************************");
+                        System.out.print("Enter Employee ID to delete: ");
+                    int deleteId = scanner.nextInt();
+                    employeeManager.deleteEmployee(deleteId);
+                    break;
+                        
+                    case 8:
+                        System.out.println("***************************************************************************");
+                    System.out.println("Exiting...");
+                    break;
+                    default:
+                        System.out.println("***************************************************************************");
+                        System.out.println("Invalid choice.");
+                }
+            } while (choice != 8);
         }
-    } while (choice != 6);
-    scanner.close();
     }
-    }
+    
+}
+
