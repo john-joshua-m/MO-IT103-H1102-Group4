@@ -280,6 +280,7 @@ displaying text fields to the console and with scanning inputs from users.
     public static void main(String[] args) {
         EmployeeManager employeeManager = new EmployeeManager();
         Motorphpayrollsystem payrollSystem = new Motorphpayrollsystem();
+        new PayrollSystemGUI();
     
         try (Scanner scanner = new Scanner(System.in)) {
             int choice;
@@ -304,9 +305,7 @@ displaying text fields to the console and with scanning inputs from users.
                 System.out.println("8. Exit");
                 System.out.print("Please press the number of your choice: ");
                 choice = scanner.nextInt();
-                
-                
-                switch (choice) {
+                 switch (choice) {
                     case 1:
                         System.out.println("***************************************************************************");
                         System.out.print("\nEmployee ID: ");
@@ -404,4 +403,3 @@ displaying text fields to the console and with scanning inputs from users.
     }
     
 }
-
