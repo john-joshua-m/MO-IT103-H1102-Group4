@@ -18,8 +18,8 @@ public class PayrollSystemGUI extends JFrame {
     JButton buttonDelete;
 
     JPanel menuPanel; // Declare menuPanel at the class level
-
-    public PayrollSystemGUI() {
+    
+        public PayrollSystemGUI() {
         // Initialize backend systems
         this.payrollSystem = new Motorphpayrollsystem();
         this.manageEmployee = new EmployeeManager();
@@ -33,32 +33,71 @@ public class PayrollSystemGUI extends JFrame {
         setLocationRelativeTo(null);
 
         // Set icon image
-        ImageIcon image = new ImageIcon("samplelogo.jpg");
+        ImageIcon image = new ImageIcon("./resources/MotorPH.png"); //create image icon
         setIconImage(image.getImage());
 
-        // Background color
-        getContentPane().setBackground(new Color(128, 128, 128));
+        // Background (image)
+        ImageIcon bgIcon = new ImageIcon("./resources/bg3.png"); //get the image from the resources folder
+        Image scaled = bgIcon.getImage().getScaledInstance(600, 300, Image.SCALE_SMOOTH);
+        JLabel background = new JLabel(new ImageIcon(scaled));      
+        background.setBounds(0, 0, 600, 300);
+        setContentPane(background);
+        background.setLayout(null);
+        
+        JLabel titleLine1 = new JLabel("MotorPH", SwingConstants.LEFT);
+        titleLine1.setBounds(35, 150, 600, 30);
+        titleLine1.setFont(new Font("Arial", Font.BOLD, 30));
+        titleLine1.setForeground(Color.WHITE);
 
-        // Header
-        JLabel label = new JLabel("MotorPH Payroll System", SwingConstants.CENTER);
-        label.setForeground(Color.GRAY);
-        label.setBounds(0, 0, 600, 20);
+        JLabel titleLine2 = new JLabel("Payroll System", SwingConstants.LEFT);
+        titleLine2.setBounds(35, 180, 600, 30);
+        titleLine2.setFont(new Font("Arial", Font.PLAIN, 26));
+        titleLine2.setForeground(Color.WHITE);
+
+        background.add(titleLine1);
+        background.add(titleLine2);
+       
+
+        // Header with logo
+        ImageIcon headerIcon = new ImageIcon("./resources/MotorPH.png"); //To get picture from resources folder
+        Image icon = headerIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH); //To scale the image
+        headerIcon = new ImageIcon(icon);        
+               
+        JLabel label = new JLabel(headerIcon, SwingConstants.LEFT); //Put logo at the top left corner
+        label.setForeground(new Color(0, 0, 128)); //Navy Blue color
+        label.setBounds(10, 0, 600, 30);
+        label.setFont(new Font("Arial",Font.BOLD, 20));
 
         JPanel whitePanel = new JPanel();
         whitePanel.setLayout(null);
         whitePanel.setBackground(Color.WHITE);
-        whitePanel.setBounds(0, 0, 600, 20);
+        whitePanel.setBounds(0, 0, 600, 30);
         whitePanel.add(label);
         add(whitePanel);
+        
+        //Footer
+        
+        JPanel redPanel = new JPanel();
+        redPanel.setLayout(null);
+        redPanel.setBackground(new Color(185, 0, 0)); // Red color 
+        redPanel.setBounds(0, getHeight() - 70, 600, 40); //To position at the bottom of the frame
+        
+        
+        JLabel footerLabel = new JLabel("© 2025 MotorPH Payroll", SwingConstants.LEFT);
+        footerLabel.setForeground(Color.WHITE);
+        footerLabel.setBounds(10, 0, 600, 30); // To position 10px from the left
+        footerLabel.setFont(new Font("Arial",Font.BOLD, 10));
+        redPanel.add(footerLabel);
+       
 
      // Menu panel with GridLayout for buttons
         menuPanel = new JPanel(); // Initialize menuPanel here
         menuPanel.setLayout(new GridLayout(7, 1, 5, 5)); // 7 rows, 1 column, 5px gaps
-        menuPanel.setBackground(Color.WHITE);
+        menuPanel.setOpaque(false); //Make panel transparent
         menuPanel.setSize(240, 300); // Set the initial size
 
         // Initialize buttons
-        buttonCalculate = new JButton("Calculate Net Salary");
+        buttonCalculate = new JButton("Calculate Net Salary");        
         buttonRenderHours = new JButton("Set Rendered Hours");
         buttonOvertime = new JButton("Add Overtime Hours");
         buttonAddEmployee = new JButton("Add Employee");
@@ -76,12 +115,14 @@ public class PayrollSystemGUI extends JFrame {
         menuPanel.add(buttonDelete);
 
         add(menuPanel);
-
+        
         // Button styles & listeners
         JButton[] buttons = {buttonCalculate, buttonRenderHours, buttonOvertime, buttonAddEmployee, buttonView, buttonEdit, buttonDelete};
         for (JButton btn : buttons) {
-            btn.setFocusable(false);
-            btn.setForeground(Color.BLACK);
+            btn.setFocusable(false); 
+            btn.setForeground(new Color (0, 0, 128)); // Navy Blue color
+            btn.setBackground(Color.WHITE);
+            btn.setBorder(BorderFactory.createLineBorder(Color.WHITE, 5, true)); // White border for the buttons
             btn.setHorizontalTextPosition(SwingConstants.CENTER);
         }
 
@@ -112,7 +153,7 @@ public class PayrollSystemGUI extends JFrame {
             }
         });
 
-        buttonOvertime.addActionListener(e -> {
+     buttonOvertime.addActionListener(e -> {
             try {
                 String inputId = JOptionPane.showInputDialog("Enter Employee ID:");
                 if (inputId == null || inputId.trim().isEmpty()) return;
@@ -260,20 +301,14 @@ public class PayrollSystemGUI extends JFrame {
             public void componentShown(ComponentEvent e) {
                 int frameWidth = getWidth();
                 int panelWidth = menuPanel.getWidth();
-                int centerX = (frameWidth - panelWidth) / 2;
-                menuPanel.setBounds(centerX, 40, 240, 300); // Adjusted y to 40
+                int rightX = (frameWidth - panelWidth) - 50;
+                menuPanel.setBounds(rightX, 40, 240, 300); // Adjusted y to 40
             }
 
-            @Override
-            public void componentResized(ComponentEvent e) {
-                int frameWidth = getWidth();
-                int panelWidth = menuPanel.getWidth();
-                int centerX = (frameWidth - panelWidth) / 2;
-                menuPanel.setBounds(centerX, 40, 240, 300); // Adjusted y to 40
-            }
         });
 
         setVisible(true);
+        add(redPanel); // Add the footer
     }
 
     public static void main(String[] args) {
@@ -287,4 +322,3 @@ public class PayrollSystemGUI extends JFrame {
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-
