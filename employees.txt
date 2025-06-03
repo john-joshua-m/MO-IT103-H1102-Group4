@@ -2,3 +2,4 @@
 10066,James,Doe,10/01/1990,Manger,100.0,100000.0
 10011,Joe,Doe,01/01/1994,Manager,500.0,50000.0
 10011,Joseph,Doe,01/10/1994,Manager,500.0,60000.0
+10098,Robert,De la Cruz,01/01/1991,Manager,1500.0,90000.0

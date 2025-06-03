@@ -8,6 +8,14 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>23</maven.compiler.release>
-        <exec.mainClass>com.mycompany.motorphpayrollsystem.Motorphpayrollsystem</exec.mainClass>
+        <exec.mainClass>com.mycompany.motorphpayrollsystem.PayrollSystemGUI</exec.mainClass>
     </properties>
+    
+        <dependencies>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.9</version>
+        </dependency>
+        </dependencies>
 </project>

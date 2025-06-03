@@ -3,21 +3,27 @@ package com.mycompany.motorphpayrollsystem;
 import java.io.*;
 import java.util.*;
 
-class Employee { // Not public, because EmployeeManager is public in another file.
+public class Employee {
     private int employeeId;
-    private double hourlyRate;
-    private double totalHoursWorked;
-    private double overtimeHours;
     private String firstName;
     private String lastName;
-    private String position;
     private String birthday;
+    private String position;
+    private double hourlyRate;
     private double salary;
+
+    private String sssNo;
+    private String philhealthNo;
+    private String tin;
+    private String pagibigNo;
+
+    private double totalHoursWorked;
+    private double overtimeHours;
+
     private static final double MONTHLY_OVERTIME_THRESHOLD = 160.0;
 
-    public Employee(int employeeId, String firstName, String lastName, String birthday, String position, double hourlyRate, double salary) {
-        this.totalHoursWorked = 0;
-        this.overtimeHours = 0;
+    public Employee(int employeeId, String firstName, String lastName, String birthday, String position,
+                    double hourlyRate, double salary, String sssNo, String philhealthNo, String tin, String pagibigNo) {
         this.employeeId = employeeId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -25,25 +31,19 @@ class Employee { // Not public, because EmployeeManager is public in another fil
         this.position = position;
         this.hourlyRate = hourlyRate;
         this.salary = salary;
+        this.sssNo = sssNo;
+        this.philhealthNo = philhealthNo;
+        this.tin = tin;
+        this.pagibigNo = pagibigNo;
+        this.totalHoursWorked = 0;
+        this.overtimeHours = 0;
     }
 
     public int getEmployeeId() {
         return employeeId;
     }
 
-    public double getHourlyRate() {
-        return hourlyRate;
-    }
-
-    public double getTotalHoursWorked() {
-        return totalHoursWorked;
-    }
-
-    public double getOvertimeHours() {
-        return overtimeHours;
-    }
-
-    public String getName() {
+    public String getFirstName() {
         return firstName;
     }
 
@@ -63,8 +63,40 @@ class Employee { // Not public, because EmployeeManager is public in another fil
         return position;
     }
 
+    public double getHourlyRate() {
+        return hourlyRate;
+    }
+
     public double getSalary() {
         return salary;
+    }
+
+    public String getSssNo() {
+        return sssNo;
+    }
+
+    public String getPhilhealthNo() {
+        return philhealthNo;
+    }
+
+    public String getTin() {
+        return tin;
+    }
+
+    public String getPagibigNo() {
+        return pagibigNo;
+    }
+
+    public double getTotalHoursWorked() {
+        return totalHoursWorked;
+    }
+
+    public double getOvertimeHours() {
+        return overtimeHours;
+    }
+
+    public void setEmployeeId(int employeeId) {
+        this.employeeId = employeeId;
     }
 
     public void setFirstName(String firstName) {
@@ -91,75 +123,103 @@ class Employee { // Not public, because EmployeeManager is public in another fil
         this.salary = salary;
     }
 
-    public void setRenderedHours(double hours) {
-        this.totalHoursWorked = hours;
+    public void setSssNo(String sssNo) {
+        this.sssNo = sssNo;
     }
 
-    public void addOvertimeHours(double hours) {
-        this.overtimeHours += hours;
+    public void setPhilhealthNo(String philhealthNo) {
+        this.philhealthNo = philhealthNo;
     }
 
-    public String toFileString() {
-        return employeeId + "," + firstName + "," + lastName + "," + birthday + "," + position + "," + hourlyRate + "," + salary;
+    public void setTin(String tin) {
+        this.tin = tin;
     }
 
-    public static Employee fromFileString(String line) {
-        String[] parts = line.split(",");
+    public void setPagibigNo(String pagibigNo) {
+        this.pagibigNo = pagibigNo;
+    }
 
-        // Check if the line contains exactly 7 parts
-        if (parts.length != 7) {
-            System.out.println("\nSkipping invalid employee record: " + line);
-            return null; // Return null if the data format is incorrect
+    public void addRenderedHours(double hours) {
+        if (hours <= 0) {
+            System.out.println("Invalid input: Hours should be positive.");
+            return;
         }
 
+        double potentialTotalHours = totalHoursWorked + hours;
+
+        if (potentialTotalHours > MONTHLY_OVERTIME_THRESHOLD) {
+            double regularHoursToAdd = MONTHLY_OVERTIME_THRESHOLD - totalHoursWorked;
+            if (regularHoursToAdd > 0) {
+                totalHoursWorked += regularHoursToAdd;
+            }
+
+            double remainingHours = hours - regularHoursToAdd;
+            if (remainingHours > 0) {
+                overtimeHours += remainingHours;
+            }
+        } else {
+            totalHoursWorked += hours;
+        }
+    }
+
+    public void resetMonthlyHours() {
+        this.totalHoursWorked = 0;
+        this.overtimeHours = 0;
+    }
+
+    public String[] toCsvArray() {
+        return new String[]{
+            String.valueOf(employeeId),
+            firstName,
+            lastName,
+            birthday,
+            position,
+            String.valueOf(hourlyRate),
+            String.valueOf(salary),
+            sssNo,
+            philhealthNo,
+            tin,
+            pagibigNo
+        };
+    }
+
+    public static Employee fromCsvArray(String[] parts) {
+        if (parts.length != 11) {
+            System.err.println("Error: Invalid number of fields for employee record: " + Arrays.toString(parts));
+            return null;
+        }
         try {
-            int employeeId = Integer.parseInt(parts[0]);
+            int id = Integer.parseInt(parts[0]);
             String firstName = parts[1];
             String lastName = parts[2];
             String birthday = parts[3];
             String position = parts[4];
             double hourlyRate = Double.parseDouble(parts[5]);
             double salary = Double.parseDouble(parts[6]);
-            return new Employee(employeeId, firstName, lastName, birthday, position, hourlyRate, salary);
+            String sssNo = parts[7];
+            String philhealthNo = parts[8];
+            String tin = parts[9];
+            String pagibigNo = parts[10];
+
+            return new Employee(id, firstName, lastName, birthday, position, hourlyRate, salary,
+                                sssNo, philhealthNo, tin, pagibigNo);
         } catch (NumberFormatException e) {
-            System.out.println("\nError parsing employee record: " + line);
+            System.err.println("Error parsing numeric data in employee record: " + Arrays.toString(parts) + " - " + e.getMessage());
+            return null;
+        } catch (Exception e) {
+            System.err.println("Unknown error creating employee from CSV: " + Arrays.toString(parts) + " - " + e.getMessage());
             return null;
         }
     }
 
     public void displayInfo() {
         System.out.println("***************************************************************************");
-        System.out.println("ID: " + employeeId + " | Name: " + firstName + " | Last Name: " + lastName
-                + " | Birthday: " + birthday + " | Position: " + position
-                + " | Hourly Rate: " + hourlyRate + " | Salary: " + salary);
+        System.out.println("ID: " + employeeId + " | Name: " + firstName + " " + lastName);
+        System.out.println("Birthday: " + birthday + " | Position: " + position);
+        System.out.println("Hourly Rate: " + String.format("%.2f", hourlyRate) + " | Monthly Salary: " + String.format("%.2f", salary));
+        System.out.println("SSS No: " + sssNo + " | PhilHealth No: " + philhealthNo + " | TIN: " + tin + " | Pag-IBIG No: " + pagibigNo);
+        System.out.println("Total Hours Worked (current period): " + String.format("%.2f", totalHoursWorked));
+        System.out.println("Overtime Hours (current period): " + String.format("%.2f", overtimeHours));
         System.out.println("***************************************************************************");
-    }
-
-    public void addRenderedHours(double hours) {
-        if (hours <= 0) {
-            System.out.println("\nInvalid input: Hours should be positive.");
-            return;
-        }
-
-        totalHoursWorked += hours;
-
-        if (totalHoursWorked > MONTHLY_OVERTIME_THRESHOLD) {
-            overtimeHours = totalHoursWorked - MONTHLY_OVERTIME_THRESHOLD;
-        }
-
-        double totalAfterAdding = totalHoursWorked + hours;
-
-        if (totalAfterAdding > MONTHLY_OVERTIME_THRESHOLD) {
-            double overtimeToAdd = totalAfterAdding - MONTHLY_OVERTIME_THRESHOLD;
-            overtimeHours += overtimeToAdd;
-            totalHoursWorked = MONTHLY_OVERTIME_THRESHOLD;
-        } else {
-            totalHoursWorked = totalAfterAdding;
-        }
-    }
-
-    public void resetMonthlyHours() {
-        totalHoursWorked = 0;
-        overtimeHours = 0;
     }
 }
