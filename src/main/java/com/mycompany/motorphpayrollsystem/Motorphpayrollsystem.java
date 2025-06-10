@@ -2,11 +2,10 @@ package com.mycompany.motorphpayrollsystem;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List; // Import List for use
+import java.util.List;
 
 public class Motorphpayrollsystem {
 
-    // No main method here anymore, as PayrollSystemGUI will be the main entry point
 
     // Constants for PhilHealth (based on 2023 rates, 4.0% premium, 50/50 employer/employee)
     private static final double PHILHEALTH_RATE = 0.04; // 4% of monthly basic salary
@@ -17,18 +16,10 @@ public class Motorphpayrollsystem {
     private static final double PAGIBIG_EMPLOYER_CONTRIBUTION_RATE = 0.02; // 2% of basic salary
     private static final double PAGIBIG_MAX_SALARY_FOR_CONTRIBUTION = 5000.00; // Max monthly basic salary for contribution base
 
-    // SSS contribution rates (simplified example, actual table is complex)
-    // For simplicity, let's assume a fixed amount or a tiered system.
-    // A full SSS implementation requires a detailed lookup table.
-    // For this example, let's assume a simplified flat rate or a basic computation.
-    // As of 2023, SSS is 14% with varying employee/employer share. Let's use a sample tier.
-    // You would typically use a series of if-else or a lookup table.
-    // Example: For salary P20,000 and above, contribution might be P900.00 (employee share).
-    // Let's create a placeholder method for SSS based on salary.
+  
     public static double calculateSSSContribution(double basicSalary) {
-        // This is a simplified example. Real SSS computation uses a detailed table.
-        // For demonstration, let's use a few tiers.
-        if (basicSalary < 3250) return 135.00; // Min for employee share (for below 3250, but actual table varies)
+   
+        if (basicSalary < 3250) return 135.00; // Min for employee share 
         else if (basicSalary <= 3749.99) return 157.50;
         else if (basicSalary <= 4249.99) return 180.00;
         else if (basicSalary <= 4749.99) return 202.50;
@@ -62,16 +53,13 @@ public class Motorphpayrollsystem {
         else if (basicSalary <= 18749.99) return 832.50;
         else if (basicSalary <= 19249.99) return 855.00;
         else if (basicSalary <= 19749.99) return 877.50;
-        else return 900.00; // For 20,000 and above (maximum bracket)
+        else return 900.00; // For 20,000 and above 
     }
 
-    // Tax (Withholding Tax) - Placeholder, actual BIR tax computation is complex
-    // Needs progressive tax table. For simplicity, let's use a very basic approximation.
+    
     public static double calculateWithholdingTax(double grossIncome) {
-        // This is a highly simplified placeholder.
-        // Actual BIR tax computation involves a detailed progressive tax table based on income brackets.
-        // For a full implementation, you would need a robust lookup function for tax.
-        if (grossIncome <= 20833) { // Equivalent to 250,000 annually, tax exempt monthly
+
+        if (grossIncome <= 20833) { 
             return 0;
         } else if (grossIncome <= 33333) { // Up to 400,000 annually
             return (grossIncome - 20833) * 0.20;
@@ -87,15 +75,8 @@ public class Motorphpayrollsystem {
     }
 
 
-    /**
-     * Calculates the monthly gross salary for an employee.
-     * Monthly Gross Salary = Monthly Basic Salary + (Hourly Rate * Overtime Hours * 1.25)
-     * Overtime is assumed to be 125% of hourly rate.
-     * This method assumes totalHoursWorked is regular hours up to MONTHLY_OVERTIME_THRESHOLD
-     * and overtimeHours are hours beyond that.
-     * @param employee The employee object
-     * @return Monthly Gross Salary
-     */
+  
+     //Calculates the monthly gross salary for an employee.        
     public static double calculateGrossSalary(Employee employee) {
         if (employee == null) {
             System.err.println("Error: Employee object is null for gross salary calculation.");
@@ -213,3 +194,5 @@ public class Motorphpayrollsystem {
         System.out.println("----------------------------------------------------------");
     }
 }
+
+

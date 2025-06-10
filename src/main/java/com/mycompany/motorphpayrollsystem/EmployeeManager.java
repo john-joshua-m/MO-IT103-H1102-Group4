@@ -3,7 +3,7 @@ package com.mycompany.motorphpayrollsystem;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
-
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,12 +16,12 @@ import java.util.stream.Collectors;
 public class EmployeeManager {
     private static EmployeeManager instance; // Singleton instance
     private List<Employee> employees;
-    private static final String CSV_FILE_PATH = "employees.csv"; // CSV file name
+    private static final String csvFile = "employees.csv"; // CSV file name
 
     // Private constructor for Singleton pattern
     private EmployeeManager() {
         employees = new ArrayList<>();
-        loadEmployeesFromFile(); // Load employees when manager is created
+        loadEmployeesFromFile(); // Load employees 
     }
 
     // Public method to get the Singleton instance
@@ -49,16 +49,16 @@ public class EmployeeManager {
 
     private void loadEmployeesFromFile() {
         employees.clear(); // Clear existing list before loading
-        try (CSVReader reader = new CSVReader(new FileReader(CSV_FILE_PATH))) {
+        try (CSVReader reader = new CSVReader(new FileReader(csvFile))) {
             List<String[]> allRows = reader.readAll();
             if (allRows.isEmpty()) {
                 System.out.println("CSV file is empty or headers are missing. No employees loaded.");
                 return;
             }
 
-            // Skip header row if it exists
+            // Skip header row 
             List<String[]> dataRows;
-            if (allRows.get(0)[0].equals("Employee ID")) { // Assuming first cell of header is "Employee ID"
+            if (allRows.get(0)[0].equals("Employee ID")) { 
                 dataRows = allRows.subList(1, allRows.size());
             } else {
                 dataRows = allRows; // No header, all rows are data
@@ -69,18 +69,22 @@ public class EmployeeManager {
                 if (employee != null) {
                     employees.add(employee);
                 }
+                reader.close();
             }
-            System.out.println("Employees loaded from " + CSV_FILE_PATH);
+            System.out.println("Employees loaded from " + csvFile);
         } catch (IOException e) {
-            System.err.println("Could not read " + CSV_FILE_PATH + ". Creating new file on save. Error: " + e.getMessage());
-            // This is often fine, means the file doesn't exist yet, it will be created on first save.
+            System.err.println("Could not read " + csvFile + ". Creating new file on save. Error: " + e.getMessage());
+            
         } catch (CsvException e) {
             System.err.println("Error parsing CSV file: " + e.getMessage());
         }
     }
 
-    private void saveEmployeesToFile() {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_PATH))) {
+    private void saveEmployeesToFile() throws IOException {
+        
+        String tempFile = "employees.tmp";
+        
+        try (CSVWriter writer = new CSVWriter(new FileWriter(tempFile))) {
             // Write header
             String[] header = {"Employee ID", "First Name", "Last Name", "Birthday", "Position",
                                "Hourly Rate", "Monthly Salary", "SSS No", "PhilHealth No", "TIN", "Pag-IBIG No"};
@@ -88,18 +92,37 @@ public class EmployeeManager {
 
             // Write employee data
             for (Employee employee : employees) {
-                writer.writeNext(employee.toCsvArray());
+                String [] employeeData = (employee.toCsvArray());
+                
+                for (int i = 0; i < employeeData.length; i++) {
+                employeeData[i] = employeeData[i].replace(",", ";"); // Replaces commas with semicolons
             }
-            System.out.println("Employees saved to " + CSV_FILE_PATH);
-        } catch (IOException e) {
-            System.err.println("Error writing to " + CSV_FILE_PATH + ": " + e.getMessage());
+             writer.writeNext(employeeData);   
+            }        
+            
+          }            
+            
+          File originalFile = new File(csvFile);
+          File temp = new File(tempFile);
+            
+          if (!originalFile.delete()) {
+          System.err.println("Failed to delete original CSV file.");
+          }
+
+          if (!temp.renameTo(originalFile)) {
+              System.err.println("Failed to rename temp file to original CSV file.");
+          } else {
+              System.out.println("Employees saved to " + csvFile);
+            
         }
     }
+
+
 
     // --- Employee Management Methods ---
 
     public boolean addEmployee(int employeeId, String firstName, String lastName, String birthday, String position,
-                               double hourlyRate, double salary, String sssNo, String philhealthNo, String tin, String pagibigNo) {
+                               double hourlyRate, double salary, String sssNo, String philhealthNo, String tin, String pagibigNo) throws IOException {
         if (getEmployeeById(employeeId) != null) {
             System.out.println("Error: Employee with ID " + employeeId + " already exists.");
             return false;
@@ -114,7 +137,7 @@ public class EmployeeManager {
 
     public boolean editEmployee(int employeeId, String newFirstName, String newLastName, String newBirthday,
                                 String newPosition, double newHourlyRate, double newSalary,
-                                String newSssNo, String newPhilhealthNo, String newTin, String newPagibigNo) {
+                                String newSssNo, String newPhilhealthNo, String newTin, String newPagibigNo) throws IOException {
         Employee employee = getEmployeeById(employeeId);
         if (employee != null) {
             if (!newFirstName.isEmpty()) employee.setFirstName(newFirstName);
@@ -137,7 +160,7 @@ public class EmployeeManager {
         }
     }
 
-    public boolean deleteEmployee(int employeeId) {
+    public boolean deleteEmployee(int employeeId) throws IOException {
         boolean removed = employees.removeIf(e -> e.getEmployeeId() == employeeId);
         if (removed) {
             saveEmployeesToFile(); // Save changes after deleting
@@ -170,3 +193,5 @@ public class EmployeeManager {
         System.out.println("--------------------------------------------------------------------------------------------------");
     }
 }
+
+
