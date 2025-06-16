@@ -29,11 +29,7 @@ public class AttendanceManager {
     
     private AttendanceManager() {
         attendanceRecords = new ArrayList<>();
-        try {
-            loadAttendanceFromFile();
-        } catch (IOException ex) {
-            Logger.getLogger(AttendanceManager.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        loadAttendanceFromFile();
     }
     
      public static synchronized AttendanceManager getInstance() {
@@ -43,7 +39,7 @@ public class AttendanceManager {
        return instance; 
      }
      
-    public void loadAttendanceFromFile() throws FileNotFoundException, IOException {
+    public void loadAttendanceFromFile() {
           try (CSVReader reader = new CSVReader(new FileReader(attendanceCsv))) {
               DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a"); 
               String[] nextLine;
@@ -58,7 +54,13 @@ public class AttendanceManager {
                     AttendanceRecord record = new AttendanceRecord(employeeId, lastName, firstName, date, timeIn, timeOut);
                     attendanceRecords.add(record);
               }
+            System.out.println("Attendance records loaded from " + attendanceCsv);
           } catch (CsvValidationException ex) {
+            System.out.println("Error occured while loading attendance records.");
+            Logger.getLogger(AttendanceManager.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(AttendanceManager.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
             Logger.getLogger(AttendanceManager.class.getName()).log(Level.SEVERE, null, ex);
         }
       }
