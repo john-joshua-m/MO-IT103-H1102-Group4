@@ -1,4 +1,6 @@
 package com.mycompany.motorphpayrollsystem;
+import com.mycompany.motorphpayrollsystem.AttendanceRecord;
+import com.mycompany.motorphpayrollsystem.AttendanceManager;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -7,8 +9,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File; // For checking image 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+
 
 public class PayrollSystemGUI extends JFrame {
 
@@ -24,6 +34,7 @@ public class PayrollSystemGUI extends JFrame {
     private JPanel addEmployeePanel;
     private JPanel updateEmployeePanel;
     private JPanel calculatePayPanel;
+    private JPanel attendancePanel;
     private JTextArea employeeDetailsArea;
 
     // --- Constructor ---
@@ -181,6 +192,7 @@ public class PayrollSystemGUI extends JFrame {
         mainPanel.add(welcomePanel, "Welcome");
     }
 
+    //Shows the table in a scrollable panel with buttons
     private void setupViewAllEmployeesPanel() {
         viewAllEmployeesPanel = new JPanel(new BorderLayout(10, 10));
         viewAllEmployeesPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -205,6 +217,7 @@ public class PayrollSystemGUI extends JFrame {
         employeeTable.setRowHeight(25);
         employeeTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
         employeeTable.getTableHeader().setBackground(new Color(173, 216, 230)); // Light Blue
+        employeeTable.getTableHeader().setReorderingAllowed(false);
         employeeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Only one row selectable
 
         JScrollPane scrollPane = new JScrollPane(employeeTable);
@@ -212,10 +225,11 @@ public class PayrollSystemGUI extends JFrame {
 
         // Buttons for navigation
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton refreshBtn = createStyledButton("Refresh Records");
-        JButton backBtn = createStyledButton("Back to Main Menu");
-        JButton viewEmployee = createStyledButton("View Employee");  
-        JButton updateEmployee = createStyledButton("Update Details");
+        JButton refreshBtn = createStyledButton2("Refresh Records");
+        JButton backBtn = createStyledButton2("Back to Main Menu");
+        JButton viewEmployee = createStyledButton2("View Employee");  
+        JButton updateEmployee = createStyledButton2("Update Details");
+        JButton attendanceBtn = createStyledButton2("Record Attendance");
 
         refreshBtn.addActionListener(e -> populateEmployeeTable());
         backBtn.addActionListener(e -> showPanel("Welcome"));         
@@ -223,6 +237,7 @@ public class PayrollSystemGUI extends JFrame {
         buttonPanel.add(backBtn);
         buttonPanel.add(viewEmployee);      
         buttonPanel.add(updateEmployee);
+        buttonPanel.add(attendanceBtn);
         
          viewEmployee.addActionListener(e -> { // To view the employee details based on the row selected
             int selectedRow = employeeTable.getSelectedRow();
@@ -230,7 +245,12 @@ public class PayrollSystemGUI extends JFrame {
                 int empId = Integer.parseInt(employeeTable.getValueAt(selectedRow, 0).toString()); // Column 0 is Employee ID
                 Employee selectedEmp = employeeManager.getEmployeeById(empId);
                 if (selectedEmp != null) {
-                    setupViewSpecificEmployeePanel(selectedEmp); // Shows the details
+                     List<AttendanceRecord> allRecords = AttendanceManager.getInstance().getAllAttendanceRecords();
+                     List<AttendanceRecord> employeeRecords = allRecords.stream()
+                         .filter(r -> r.getEmployeeId() == selectedEmp.getEmployeeId())
+                         .toList();
+                     
+                    setupViewSpecificEmployeePanel(selectedEmp, employeeRecords); // Shows the details
                     showPanel("ViewSpecific"); // Then show the panel
                 } else {
                     JOptionPane.showMessageDialog(this, "Employee not found.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -240,8 +260,6 @@ public class PayrollSystemGUI extends JFrame {
             }
         });
          
-        viewAllEmployeesPanel.add(buttonPanel, BorderLayout.SOUTH);
-        
         updateEmployee.addActionListener(e -> {
            int selectedRow = employeeTable.getSelectedRow();
            if (selectedRow != -1) {
@@ -257,21 +275,44 @@ public class PayrollSystemGUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please select an employee first.", "Warning", JOptionPane.WARNING_MESSAGE);
             }
         });
-
+        
+        attendanceBtn.addActionListener(e -> {
+           int selectedRow = employeeTable.getSelectedRow();
+           if (selectedRow != -1) {
+               int empId = Integer.parseInt(employeeTable.getValueAt (selectedRow, 0). toString());
+               Employee selectedEmp = employeeManager.getEmployeeById(empId);
+               String firstName = employeeTable.getValueAt(selectedRow, 1).toString();
+               String lastName = employeeTable.getValueAt(selectedRow, 2).toString();
+               
+               if (selectedEmp != null) {
+                    setupAttendancePanel(empId,firstName, lastName); // Shows the details
+                    showPanel("Attendance Record"); 
+                } else {
+                    JOptionPane.showMessageDialog(this, "Employee not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Please select an employee first.", "Warning", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+        
+        viewAllEmployeesPanel.add(buttonPanel, BorderLayout.SOUTH);
         mainPanel.add(viewAllEmployeesPanel, "ViewAll");
     }
 
-    private void setupViewSpecificEmployeePanel(Employee employee) {
+    //Panel that shows after selecting an employee from the table
+    private void setupViewSpecificEmployeePanel(Employee employee, List<AttendanceRecord> attendanceRecords) {
+        
+
              viewSpecificEmployeePanel = new JPanel(new BorderLayout(10, 10));
              viewSpecificEmployeePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
              viewSpecificEmployeePanel.setBackground(Color.WHITE);
 
-             JLabel titleLabel = new JLabel("Employee Details & Pay Calculator", SwingConstants.CENTER);
+             JLabel titleLabel = new JLabel("Employee Details", SwingConstants.CENTER);
              titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
              titleLabel.setForeground(new Color(0, 51, 102));
              viewSpecificEmployeePanel.add(titleLabel, BorderLayout.NORTH);
 
-             // Employee Details Area
+             // Employee Details Area that is NOT editable
              employeeDetailsArea = new JTextArea(15, 40);
              employeeDetailsArea.setFont(new Font("Arial", Font.PLAIN, 14));
              employeeDetailsArea.setEditable(false);
@@ -287,27 +328,27 @@ public class PayrollSystemGUI extends JFrame {
 
              JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
              inputPanel.setBackground(new Color(240, 248, 255));
+             
+             //Input data range to calculate pay within that payroll period only
+             JLabel startDate = new JLabel("Start Date (MM/dd/yyyy) :");
+             JTextField startDateField = new JTextField(10);
+             startDateField.setToolTipText("Enter start date");
 
-             JLabel monthLabel = new JLabel("Month:");
-             String[] months = {"January", "February", "March", "April", "May", "June",
-                                "July", "August", "September", "October", "November", "December"};
-             JComboBox<String> monthComboBox = new JComboBox<>(months);
-             monthComboBox.setSelectedItem("June");
+             JLabel endDate = new JLabel("End Date (MM/dd/yyyy):");
+             JTextField endDateField = new JTextField(10);
+             endDateField.setToolTipText("Enter end date");
 
-             JLabel hoursLabel = new JLabel("Hours Worked This Month:");
-             JTextField hoursField = new JTextField(10);
-             hoursField.setToolTipText("Enter total hours worked, including any overtime.");
+             JButton calculateBtn = createStyledButton2("Calculate Pay");
 
-             JButton calculateBtn = createStyledButton("Calculate Pay");
-
-             inputPanel.add(monthLabel);
-             inputPanel.add(monthComboBox);
-             inputPanel.add(hoursLabel);
-             inputPanel.add(hoursField);
+             inputPanel.add(startDate);
+             inputPanel.add(endDate);
+             inputPanel.add(startDateField);
+             inputPanel.add(endDateField);
              inputPanel.add(calculateBtn);
 
              payCalculatorPanel.add(inputPanel, BorderLayout.NORTH);
 
+             //To display generated payslip (NOT editable)
              JTextArea payslipArea = new JTextArea(20, 40);
              payslipArea.setEditable(false);
              payslipArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
@@ -316,59 +357,112 @@ public class PayrollSystemGUI extends JFrame {
              payCalculatorPanel.add(payslipScroll, BorderLayout.CENTER);
 
              calculateBtn.addActionListener(e -> {
-                 try {
-                     double hoursWorkedInput = Double.parseDouble(hoursField.getText().trim());
-                     String selectedMonth = (String) monthComboBox.getSelectedItem();
-
-                     employee.resetMonthlyHours();
-                     employee.addRenderedHours(hoursWorkedInput);
-
-                     double basicSalary = employee.getSalary();
-                     double hourlyRate = employee.getHourlyRate();
-                     double totalRegularHours = employee.getTotalHoursWorked();
-                     double overtimeHours = employee.getOvertimeHours();
-                     double grossSalary = Motorphpayrollsystem.calculateGrossSalary(employee);
-
-                     double sssDeduction = Motorphpayrollsystem.calculateSSSContribution(basicSalary);
-                     double philhealthDeduction = Motorphpayrollsystem.calculatePhilhealthContribution(basicSalary);
-                     double pagibigDeduction = Motorphpayrollsystem.calculatePagibigContribution(basicSalary);
-                     double taxableIncome = grossSalary - sssDeduction - philhealthDeduction - pagibigDeduction;
-                     double taxDeduction = Motorphpayrollsystem.calculateWithholdingTax(taxableIncome);
-                     double totalDeductions = Motorphpayrollsystem.round(sssDeduction + philhealthDeduction + pagibigDeduction + taxDeduction);
-
-                     double netSalary = Motorphpayrollsystem.round(grossSalary - totalDeductions);
-
-                     StringBuilder payslipText = new StringBuilder();
-                     payslipText.append(String.format("--- Monthly Payslip for %s (ID: %d) ---%n", employee.getFullName(), employee.getEmployeeId()));
-                     payslipText.append(String.format("Month: %s%n", selectedMonth));
-                     payslipText.append(String.format("Position: %s%n", employee.getPosition()));
-                     payslipText.append(String.format("Monthly Basic Salary: P %.2f%n", basicSalary));
-                     payslipText.append(String.format("Hourly Rate: P %.2f%n", hourlyRate));
-                     payslipText.append(String.format("Total Hours Worked (Regular): %.2f hours%n", totalRegularHours));
-                     payslipText.append(String.format("Overtime Hours: %.2f hours%n", overtimeHours));
-                     payslipText.append(String.format("Overtime Pay: P %.2f%n", (overtimeHours * hourlyRate * 1.25)));
-                     payslipText.append(String.format("Gross Salary: P %.2f%n", grossSalary));
-                     payslipText.append("----------------------------------------------------------\n");
-                     payslipText.append("Deductions:\n");
-                     payslipText.append(String.format("  SSS Contribution: P %.2f%n", sssDeduction));
-                     payslipText.append(String.format("  PhilHealth Contribution: P %.2f%n", philhealthDeduction));
-                     payslipText.append(String.format("  Pag-IBIG Contribution: P %.2f%n", pagibigDeduction));
-                     payslipText.append(String.format("  Withholding Tax: P %.2f%n", taxDeduction));
-                     payslipText.append(String.format("Total Deductions: P %.2f%n", totalDeductions));
-                     payslipText.append(String.format("NET MONTHLY SALARY: P %.2f%n", netSalary));
-
-                     payslipArea.setText(payslipText.toString());
-
-                 } catch (NumberFormatException ex) {
-                     payslipArea.setText("Invalid input. Please enter a valid number for Hours Worked.");
+                 //Get the date inputs
+                 String startDateInput = startDateField.getText().trim();
+                 String endDateInput = endDateField.getText().trim();
+                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+                 
+                 //Check if all fields are filled in
+                 if (startDateInput.isEmpty() || endDateInput.isEmpty()) {
+                     payslipArea.setText("Please fill in both start and end dates.");
+                     return;
                  }
-             });
+                 
+                 LocalDate start;
+                 LocalDate end;
+                 
+                 //Show error when parsing fails
+                 try {
+                     start = LocalDate.parse(startDateInput, formatter);
+                 } catch (DateTimeParseException dtpe) {
+                     payslipArea.setText("Please use MM/dd/yyyy format properly for Start Date");
+                     return;
+                 }
+                 
+                 //Show error when parsing fails
+                 try {
+                     end = LocalDate.parse(endDateInput, formatter);
+                 } catch (DateTimeParseException dtpe) {
+                     payslipArea.setText("Please use MM/dd/yyyy format properly for End Date");
+                     return;
+                 }
+                     
+                 //Check if end date is not before start date
+                 if (end.isBefore(start)) {
+                         payslipArea.setText("End Date must be after or equal to Start Date.");
+                         return;
+                 }
+                      
+                 try { 
+                      //Get all attendance records from AttendanceManager
+                      var allAttendance = AttendanceManager.getInstance().getAllAttendanceRecords();
+                      
+                      //Filter the records for the employee and within the specific date
+                      var filteredRecords = allAttendance.stream()
+                            .filter(r -> r.getEmployeeId() == employee.getEmployeeId()
+                                      && !r.getDate().isBefore(start)
+                                      && !r.getDate().isAfter(end))
+                            .toList();
+                      
+                      //Check if there are available records
+                      if (filteredRecords.isEmpty()) {
+                        payslipArea.setText("No attendance records found for the selected period.");
+                        return;
+                      }
+                      
+                      //Call on methods and getters for pay calculations
+                      double basicSalary = employee.getSalary();
+                      double hourlyRate = employee.getHourlyRate();
+                      double totalRegularHours = Motorphpayrollsystem.calculateTotalRenderedHours(filteredRecords);
+                      double overtimeHours = Motorphpayrollsystem.calculateTotalOvertimeHours(filteredRecords);
+                      double grossSalary = Motorphpayrollsystem.calculateGrossSalary(employee, filteredRecords);
+
+                      double tardinessHours = Motorphpayrollsystem.calculateTotalTardiness(filteredRecords);
+                      double tardinessDeduction = Motorphpayrollsystem.calculateTotalTardinessDeductions(employee, filteredRecords);
+                      double sssDeduction = Motorphpayrollsystem.calculateSSSContribution(basicSalary);
+                      double philhealthDeduction = Motorphpayrollsystem.calculatePhilhealthContribution(basicSalary);
+                      double pagibigDeduction = Motorphpayrollsystem.calculatePagibigContribution(basicSalary);
+                      double taxableIncome = grossSalary - sssDeduction - philhealthDeduction - pagibigDeduction - tardinessDeduction;
+                      double taxDeduction = Motorphpayrollsystem.calculateWithholdingTax(taxableIncome);
+                      double totalDeductions = Motorphpayrollsystem.round(tardinessDeduction + sssDeduction + philhealthDeduction + pagibigDeduction + taxDeduction);
+
+                      double netSalary = Motorphpayrollsystem.round(grossSalary - totalDeductions);
+                      
+                      
+                      //Formatted text 
+                      StringBuilder payslipText = new StringBuilder();
+                      payslipText.append(String.format("--- Payslip for %s (ID: %d) ---%n", employee.getFullName(), employee.getEmployeeId()));
+                      payslipText.append(String.format("Period: %s to %s%n", startDateInput, endDateInput));
+                      payslipText.append(String.format("Position: %s%n", employee.getPosition()));
+                      payslipText.append(String.format("Monthly Basic Salary: P %.2f%n", basicSalary));
+                      payslipText.append(String.format("Hourly Rate: P %.2f%n", hourlyRate));
+                      payslipText.append(String.format("Total Hours Worked (Regular): %.2f hours%n", totalRegularHours));
+                      payslipText.append(String.format("Overtime Hours: %.2f hours%n", overtimeHours));
+                      payslipText.append(String.format("Overtime Pay: P %.2f%n", (overtimeHours * hourlyRate * 1.25)));
+                      payslipText.append(String.format("Gross Salary: P %.2f%n", grossSalary));
+                      payslipText.append("----------------------------------------------------------\n");
+                      payslipText.append("Deductions:\n");
+                      payslipText.append(String.format("  Tardiness Hours: %.2f hours%n", tardinessHours));
+                      payslipText.append(String.format("  Tardiness Deduction: P %.2f%n", tardinessDeduction));
+                      payslipText.append(String.format("  SSS Contribution: P %.2f%n", sssDeduction));
+                      payslipText.append(String.format("  PhilHealth Contribution: P %.2f%n", philhealthDeduction));
+                      payslipText.append(String.format("  Pag-IBIG Contribution: P %.2f%n", pagibigDeduction));
+                      payslipText.append(String.format("  Withholding Tax: P %.2f%n", taxDeduction));
+                      payslipText.append(String.format("Total Deductions: P %.2f%n", totalDeductions));
+                      payslipText.append(String.format("NET SALARY: P %.2f%n", netSalary));
+
+                      payslipArea.setText(payslipText.toString());
+
+                  } catch (Exception ex) {
+                      payslipArea.setText("Invalid input. Please enter valid dates in MM/dd/yyyy format.");
+                  }
+              });
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, detailsScroll, payCalculatorPanel);
         splitPane.setResizeWeight(0.5);
         viewSpecificEmployeePanel.add(splitPane, BorderLayout.CENTER);
 
-        JButton backButton = createStyledButton("Back to All Employees");
+        JButton backButton = createStyledButton2("Back to All Employees");
         backButton.addActionListener(e -> showPanel("ViewAll"));
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -378,7 +472,7 @@ public class PayrollSystemGUI extends JFrame {
         mainPanel.add(viewSpecificEmployeePanel, "ViewSpecific");
     }   
     
-    
+    //Panel for adding new employees
     private void setupAddEmployeePanel() {
         addEmployeePanel = new JPanel(new BorderLayout(10, 10));
         addEmployeePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -434,9 +528,9 @@ public class PayrollSystemGUI extends JFrame {
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(new Color(240, 248, 255));
-        JButton saveBtn = createStyledButton("Save Employee");
-        JButton clearBtn = createStyledButton("Clear Form");
-        JButton backBtn = createStyledButton("Back to Main Menu");
+        JButton saveBtn = createStyledButton2("Save Employee");
+        JButton clearBtn = createStyledButton2("Clear Form");
+        JButton backBtn = createStyledButton2("Back to Main Menu");
 
         saveBtn.addActionListener(new ActionListener() {
             @Override
@@ -459,23 +553,107 @@ public class PayrollSystemGUI extends JFrame {
                         JOptionPane.showMessageDialog(addEmployeePanel, "All fields are required!", "Input Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
+                    
+                    
+                     if (!firstName.matches("[a-zA-Z ]+")) { 
+                        JOptionPane.showMessageDialog(addEmployeePanel, "Please enter only alphabets and spaces for the first name.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return; 
+                    } // Added this block para mag throw ng error if hindi alphabets or string ang data input
+                     
+                     if (!lastName.matches("[a-zA-Z ]+")) { // Allows letters and spaces
+                        JOptionPane.showMessageDialog(addEmployeePanel, "Last Name should only contain alphabets and spaces.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return; // Stop processing if invalid
+                    } // Added this block para mag throw ng error if hindi alphabets or string ang data input
 
-                    boolean success = employeeManager.addEmployee(id, firstName, lastName, birthday, position,
-                                                                 hourlyRate, monthlySalary, sssNo, philhealthNo, tin, pagibigNo);
-                    if (success) {
-                        JOptionPane.showMessageDialog(addEmployeePanel, "Employee added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                        clearForm(idField, firstNameField, lastNameField, birthdayField, positionField, hourlyRateField,
-                                  monthlySalaryField, sssNoField, philhealthNoField, tinField, pagibigNoField);
-                    } else {
-                        JOptionPane.showMessageDialog(addEmployeePanel, "Failed to add employee. ID might already exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                     try {
+                        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("MM/dd/yyyy");
+                        LocalDate.parse(birthday, formatter);
+                    } catch (java.time.format.DateTimeParseException dtpe) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "Invalid Birthday format. Please use MM/DD/YYYY date format.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
                     }
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(addEmployeePanel, "Invalid number format for ID, Hourly Rate, or Monthly Salary.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                } catch (IOException ex) {
-                    Logger.getLogger(PayrollSystemGUI.class.getName()).log(Level.SEVERE, null, ex);
+
+                    if (hourlyRate < 0 || monthlySalary < 0) {
+                         JOptionPane.showMessageDialog(addEmployeePanel, "Please enter the correct value. Hourly Rate and Monthly Salary cannot be negative.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                         return;
+                    } //This is for DOBs format validation as well, added this for the same purpose of checking data input
+                
+                    if (!position.matches("[a-zA-Z ]+")) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "Position should only contain alphabets and spaces.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //Newly added error message, this will check kung letters and spaces lang ang input, will throw error message pag ibang data type ang na enter sa field
+
+                  
+                    if (!sssNo.matches("\\d+")) { // \\d+ means one or more digits
+                        JOptionPane.showMessageDialog(addEmployeePanel, "SSS Number should only contain digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //Newly added error message, this will check kung numbers lang ang input, will throw error message pag ibang data type ang na enter sa field
+
+                    
+                    if (!philhealthNo.matches("\\d+")) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "PhilHealth Number should only contain digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //Newly added error message, this will check kung numbers lang ang input, will throw error message pag ibang data type ang na enter sa field
+
+                   
+                    if (!tin.matches("\\d+")) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "TIN should only contain digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //Newly added error message, this will check kung numbers lang ang input, will throw error message pag ibang data type ang na enter sa field
+
+                  
+                    if (!pagibigNo.matches("\\d+")) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "Pag-IBIG Number should only contain digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                        } //Newly added error message, this will check kung numbers lang ang input, will throw error message pag ibang data type ang na enter sa field
+
+                    // Additional field checks for SSS, Pagibig, Philhealth and TIN. I checheck nito if tama ba yung bilang ng digits entered
+                    // Digit requirements are from my research lang, depending on  SSS, Pagibig, Philhealth and TIN, baka these will change in the future
+                    //Per research, adding only minimum number of digits to allow for future changes in issued digits is not advisable for data protection so I made it 
+                    // check for exact number of digits entered sa field
+                    
+                    if (!sssNo.matches("\\d{10}")) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "SSS Number must be exactly 10 digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //Should check for exact 10 digits entered 
+
+                  
+                    if (!philhealthNo.matches("\\d{12}")) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "PhilHealth Number must be exactly 12 digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //Should check for exact 12 digits entered 
+
+                    
+
+                    if (!tin.matches("\\d{9}")) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "TIN must be exactly 9 digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //Should check for exact 9  digits entered 
+
+              
+                    if (!pagibigNo.matches("\\d{12}")) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "Pag-IBIG Number must be exactly 12 digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //Should check for exact 12 digits entered
+                    
+                    
+
+                        boolean success = employeeManager.addEmployee(id, firstName, lastName, birthday, position,
+                                                                     hourlyRate, monthlySalary, sssNo, philhealthNo, tin, pagibigNo);
+                        if (success) {
+                            JOptionPane.showMessageDialog(addEmployeePanel, "Employee added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                            clearForm(idField, firstNameField, lastNameField, birthdayField, positionField, hourlyRateField,
+                                      monthlySalaryField, sssNoField, philhealthNoField, tinField, pagibigNoField);
+                        } else {
+                            JOptionPane.showMessageDialog(addEmployeePanel, "Failed to add employee. ID might already exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "Invalid number format for ID, Hourly Rate, or Monthly Salary.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    } catch (IOException ex) {
+                        Logger.getLogger(PayrollSystemGUI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
-            }
-        });
+            });
 
         clearBtn.addActionListener(e -> clearForm(idField, firstNameField, lastNameField, birthdayField, positionField, hourlyRateField,
                                                  monthlySalaryField, sssNoField, philhealthNoField, tinField, pagibigNoField));
@@ -488,7 +666,8 @@ public class PayrollSystemGUI extends JFrame {
 
         mainPanel.add(addEmployeePanel, "AddEmployee");
     }
-
+    
+    //Panel for updating employee details
     private void setupUpdateEmployeePanel (Employee employeeToEdit) {
        updateEmployeePanel = new JPanel(new BorderLayout(10, 10));
        updateEmployeePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -538,15 +717,15 @@ public class PayrollSystemGUI extends JFrame {
         
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
-        JButton backButton = createStyledButton("Back to All Employees");
+        JButton backButton = createStyledButton2("Back to All Employees");
         backButton.addActionListener(e -> showPanel("ViewAll"));
         
-        JButton clearBtn = createStyledButton("Clear Form");
+        JButton clearBtn = createStyledButton2("Clear Form");
         clearBtn.addActionListener(e -> clearForm(firstNameField, lastNameField, birthdayField, positionField, hourlyRateField,
                                                  monthlySalaryField, sssNoField, philhealthNoField, tinField, pagibigNoField));
 
         //To save the updated information
-        JButton updateBtn = createStyledButton("Update");
+        JButton updateBtn = createStyledButton2("Update");
         updateBtn.addActionListener (e -> {
            
                     try {
@@ -580,6 +759,115 @@ public class PayrollSystemGUI extends JFrame {
         mainPanel.add(updateEmployeePanel, "UpdateEmployee");
 
     }      
+    
+    //Panel for recording time in and time out
+    private void setupAttendancePanel(int employeeId, String firstName, String lastName) {
+            attendancePanel = new JPanel (new BorderLayout());
+            
+            //Formatters for parsing date and time
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a"); //using 12-hour format
+        
+            JLabel titleLabel = new JLabel("Record Attendance for " + firstName + " " + lastName, SwingConstants.CENTER);
+            titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+            attendancePanel.add(titleLabel, BorderLayout.NORTH);
+
+            // Form Panel
+            JPanel formPanel = new JPanel(new GridLayout(10, 2, 10, 10));
+            formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            
+            JTextField dateField = new JTextField(); // Format: MM/DD/YYYY
+            dateField.setPreferredSize(new Dimension(100, 20));
+            JTextField timeInField = new JTextField(); // Format: HH:mm
+            timeInField.setPreferredSize(new Dimension(100, 20));
+            JTextField timeOutField = new JTextField(); // Format: HH:mm
+            timeOutField.setPreferredSize(new Dimension(100, 20));
+
+            formPanel.add(new JLabel("Date (MM/DD/YYYY):"));
+            formPanel.add(dateField);
+            formPanel.add(new JLabel("Time In (HH:mm AM):"));
+            formPanel.add(timeInField);
+            formPanel.add(new JLabel("Time Out (HH:mm PM):"));
+            formPanel.add(timeOutField);
+            
+            //Font for inputs
+            dateField.setFont(new Font("Arial", Font.PLAIN, 16));
+            timeInField.setFont(new Font("Arial", Font.PLAIN, 16));
+            timeOutField.setFont(new Font("Arial", Font.PLAIN, 16));
+
+            attendancePanel.add(formPanel, BorderLayout.CENTER);
+            
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton saveButton = createStyledButton2("Save");
+            JButton backButton = createStyledButton2("Back to Employee List");
+            
+            saveButton.addActionListener(e -> {
+                try {
+                    String dateInput = dateField.getText().trim();
+                    String timeInInput = timeInField.getText().toUpperCase().trim();
+                    String timeOutInput = timeOutField.getText().toUpperCase().trim();
+                    
+                    //Check if user inputs all necessary details
+                    if (dateInput.isEmpty() || timeInInput.isEmpty() || timeOutInput.isEmpty()) {
+                        JOptionPane.showMessageDialog(attendancePanel,"Please fill in all fields.","Missing Input", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    
+                    //Parse Date
+                    LocalDate date;
+                    try {
+                        date = LocalDate.parse(dateInput, DateTimeFormatter.ofPattern("MM/dd/yyyy"));
+                    } catch (DateTimeParseException dtpe) {
+                        JOptionPane.showMessageDialog(attendancePanel, "Invalid date format. Please use MM/DD/YYYY.", "Date Format Error",JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
+                     // Parse Time In
+                    LocalTime timeIn;
+                    try {
+                        timeIn = LocalTime.parse(timeInInput, timeFormatter);
+                    } catch (DateTimeParseException dtpe) {
+                        JOptionPane.showMessageDialog(attendancePanel, "Invalid Time In format. Please use h:mm AM", "Time In Format Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
+                    // Parse Time Out
+                    LocalTime timeOut;
+                    try {
+                        timeOut = LocalTime.parse(timeOutInput, timeFormatter);
+                    } catch (DateTimeParseException dtpe) {
+                        JOptionPane.showMessageDialog(attendancePanel, "Invalid Time Out format. Please use h:mm PM format", "Time Out Format Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
+                    //Check if the user inputs Time In that is later than Time Out
+                    if (timeIn.isAfter(timeOut)) {
+                        JOptionPane.showMessageDialog(attendancePanel, "Time In cannot be later than Time Out.", "Invalid Time Entry", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
+
+                    AttendanceRecord record = new AttendanceRecord(employeeId, lastName, firstName, date, timeIn, timeOut);
+                    boolean added = AttendanceManager.getInstance().addAttendanceRecord(record);
+                    if (added) {
+                        JOptionPane.showMessageDialog(attendancePanel, "Attendance recorded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        showPanel("ViewAll"); // Go back to employee list
+                    } else {
+                        JOptionPane.showMessageDialog(attendancePanel, "Attendance record for this employee on the specified date already exists.", "Record Already Exists", JOptionPane.WARNING_MESSAGE);
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(attendancePanel, "Error: " + ex.getMessage(), "Input Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
+            backButton.addActionListener(e -> showPanel("ViewAll")); 
+            buttonPanel.add(saveButton);
+            buttonPanel.add(backButton);
+
+            attendancePanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            mainPanel.add(attendancePanel, "Attendance Record");
+    }
 
     // --- Helper Methods ---
 
@@ -629,8 +917,6 @@ public class PayrollSystemGUI extends JFrame {
         details.append(String.format("PhilHealth No: %s%n", employee.getPhilhealthNo()));
         details.append(String.format("TIN: %s%n", employee.getTin()));
         details.append(String.format("Pag-IBIG No: %s%n", employee.getPagibigNo()));
-        details.append(String.format("Current Hours Worked: %.2f%n", employee.getTotalHoursWorked()));
-        details.append(String.format("Current Overtime Hours: %.2f%n", employee.getOvertimeHours()));
         employeeDetailsArea.setText(details.toString());
     }
         
@@ -661,6 +947,27 @@ public class PayrollSystemGUI extends JFrame {
         });
         return button;
     }
+    
+     private JButton createStyledButton2(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 15));
+        button.setBackground(new Color(0, 0, 90));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(Color.WHITE); // Lighter on hover
+                button.setForeground(new Color(0, 0, 128));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(0, 0, 90)); // Restore original
+                button.setForeground(Color.WHITE);
+            }
+        });
+        return button;
+    }
 
     // --- Main method ---
     public static void main(String[] args) {
@@ -670,5 +977,6 @@ public class PayrollSystemGUI extends JFrame {
         });
     }
 }
+
 
 

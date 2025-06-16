@@ -2,21 +2,12 @@ package com.mycompany.motorphpayrollsystem;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
 
 public class Motorphpayrollsystem {
 
-
-    // Constants for PhilHealth (based on 2023 rates, 4.0% premium, 50/50 employer/employee)
-    private static final double PHILHEALTH_RATE = 0.04; // 4% of monthly basic salary
-    private static final double PHILHEALTH_MAX_CONTRIBUTION = 1600.00; // Max contribution for basic salary > P40,000
-
-    // Constants for Pag-IBIG (based on 2023 rates)
-    private static final double PAGIBIG_EMPLOYEE_CONTRIBUTION_RATE = 0.02; // 2% of basic salary
-    private static final double PAGIBIG_EMPLOYER_CONTRIBUTION_RATE = 0.02; // 2% of basic salary
-    private static final double PAGIBIG_MAX_SALARY_FOR_CONTRIBUTION = 5000.00; // Max monthly basic salary for contribution base
-
-  
     public static double calculateSSSContribution(double basicSalary) {
    
         if (basicSalary < 3250) return 135.00; // Min for employee share 
@@ -73,69 +64,112 @@ public class Motorphpayrollsystem {
             return 200833.33 + (grossIncome - 666667) * 0.35;
         }
     }
+    
+    // Separate methods for total rendered hours and overtime pay for reusability
+    public static double calculateTotalRenderedHours(List<AttendanceRecord> attendanceRecords) {
+        double totalRegularHours = 0;
+        for (AttendanceRecord record : attendanceRecords) {
+            double hoursWorked = Duration.between(record.getTimeIn(), record.getTimeOut()).toMinutes()/60.0;
+            totalRegularHours += Math.min(hoursWorked,8);
+        }
+        return totalRegularHours;
+    }
+    
+    public static double calculateTotalOvertimeHours(List<AttendanceRecord> attendanceRecords) {
+        double totalOvertimeHours = 0;
+        for (AttendanceRecord record : attendanceRecords) {
+            double hoursWorked = Duration.between(record.getTimeIn(), record.getTimeOut()).toMinutes()/60.0;
+            if(hoursWorked > 8) {
+                totalOvertimeHours += (hoursWorked - 8);
+            }
+        }
+        return totalOvertimeHours;
+    }
 
-
+    public static double calculateTotalTardiness (List<AttendanceRecord> attendanceRecords) {
+        LocalTime gracePeriod = LocalTime.of(8, 10); 
+        long totalTardyMinutes = 0;
+        
+        for (AttendanceRecord record : attendanceRecords) {
+            
+            LocalTime actualTimeIn = record.getTimeIn();
+            
+            if(actualTimeIn.isAfter(gracePeriod)) {
+                Duration tardyDuration = Duration.between(gracePeriod, actualTimeIn);
+                totalTardyMinutes += tardyDuration.toMinutes();
+             }
+            }
+        
+        return totalTardyMinutes/60.0;
+    }
   
-     //Calculates the monthly gross salary for an employee.        
-    public static double calculateGrossSalary(Employee employee) {
-        if (employee == null) {
-            System.err.println("Error: Employee object is null for gross salary calculation.");
+     //Calculates the gross salary for an employee based on attendance records        
+    public static double calculateGrossSalary(Employee employee, List<AttendanceRecord> attendanceRecords) {
+        if (employee == null || attendanceRecords == null) {
+            System.err.println("Error: Employee and attendance object is null for gross salary calculation.");
             return 0.0;
         }
-        double basicSalary = employee.getSalary();
+        
         double hourlyRate = employee.getHourlyRate();
-        double overtimePay = employee.getOvertimeHours() * hourlyRate * 1.25; // 125% for overtime
-        return round(basicSalary + overtimePay);
+        double totalRegularHours = calculateTotalRenderedHours(attendanceRecords);
+        double overtimeHours = calculateTotalOvertimeHours(attendanceRecords);
+        
+        double regularPay = totalRegularHours * hourlyRate;
+        double overtimePay = overtimeHours * hourlyRate * 1.25;
+        
+        return round(regularPay + overtimePay);        
+        
     }
+    
+    public static double calculateTotalTardinessDeductions (Employee employee, List<AttendanceRecord> attendanceRecords) {
+        if (employee == null || attendanceRecords == null) {
+            System.err.println("Error: Employee and attendance object is null for gross salary calculation.");
+            return 0.0;
+        }
+        
+        double hourlyRate = employee.getHourlyRate();
+        double totalTardinessHours = calculateTotalTardiness(attendanceRecords);
+               
+        return round(totalTardinessHours * hourlyRate);  
+    }
+    
 
-    /**
-     * Calculates the monthly PhilHealth contribution.
-     * @param basicSalary Employee's monthly basic salary
-     * @return Monthly PhilHealth contribution
-     */
+    //Calculate PhilHealth Contribution based on Basic Salary
     public static double calculatePhilhealthContribution(double basicSalary) {
-        double contribution = basicSalary * PHILHEALTH_RATE / 2; // Employee's share (50%)
-        return round(Math.min(contribution, PHILHEALTH_MAX_CONTRIBUTION / 2)); // Cap at max contribution, employee share
+        if (basicSalary <= 10000) {
+           return 300f/2;
+       } else if (basicSalary >= 10000.1f && basicSalary <= 59999.99f) {
+           return (basicSalary * 0.03)/2;
+       } else {
+           return 1800 / 2; //Equally shared by employee and employer
+       }
     }
 
-    /**
-     * Calculates the monthly Pag-IBIG contribution.
-     * @param basicSalary Employee's monthly basic salary
-     * @return Monthly Pag-IBIG contribution
-     */
+    // Calculates the monthly Pag-IBIG contributio based on Basic Salary
     public static double calculatePagibigContribution(double basicSalary) {
-        double contributionBase = Math.min(basicSalary, PAGIBIG_MAX_SALARY_FOR_CONTRIBUTION);
-        return round(contributionBase * PAGIBIG_EMPLOYEE_CONTRIBUTION_RATE);
+        return Math.min(basicSalary * 0.02, 100);
     }
 
-    /**
-     * Calculates the total monthly deductions (SSS, PhilHealth, Pag-IBIG, Withholding Tax).
-     * @param grossSalary Employee's monthly gross salary
-     * @param basicSalary Employee's monthly basic salary
-     * @return Total monthly deductions
-     */
-    public static double calculateTotalDeductions(double grossSalary, double basicSalary) {
+    //Calculates the total monthly deductions (SSS, PhilHealth, Pag-IBIG, Withholding Tax).
+  
+    public static double calculateTotalDeductions(double grossSalary, double basicSalary, Employee employee, List<AttendanceRecord> attendanceRecords) {
         double sssDeduction = calculateSSSContribution(basicSalary);
         double philhealthDeduction = calculatePhilhealthContribution(basicSalary);
         double pagibigDeduction = calculatePagibigContribution(basicSalary);
-        double taxDeduction = calculateWithholdingTax(grossSalary - sssDeduction - philhealthDeduction - pagibigDeduction); // Taxable income after mandatory deductions
+        double tardinessDeduction = calculateTotalTardinessDeductions(employee, attendanceRecords);
+        double taxDeduction = calculateWithholdingTax(grossSalary - sssDeduction - philhealthDeduction - pagibigDeduction - tardinessDeduction); // Taxable income after mandatory deductions
 
         return round(sssDeduction + philhealthDeduction + pagibigDeduction + taxDeduction);
     }
 
-    /**
-     * Calculates the monthly net salary.
-     * Net Salary = Gross Salary - Total Deductions
-     * @param employee The employee object
-     * @return Monthly Net Salary
-     */
-    public static double calculateNetSalary(Employee employee) {
-        if (employee == null) {
+    //Calculates Net Salary based on attendance record.
+    public static double calculateNetSalary(Employee employee, List<AttendanceRecord> attendanceRecords) {
+        if (employee == null || attendanceRecords == null) {
             System.err.println("Error: Employee object is null for net salary calculation.");
             return 0.0;
         }
-        double grossSalary = calculateGrossSalary(employee);
-        double totalDeductions = calculateTotalDeductions(grossSalary, employee.getSalary());
+        double grossSalary = calculateGrossSalary(employee, attendanceRecords);
+        double totalDeductions = calculateTotalDeductions(grossSalary, employee.getSalary(), employee, attendanceRecords);
         return round(grossSalary - totalDeductions);
     }
 
@@ -151,7 +185,7 @@ public class Motorphpayrollsystem {
     }
 
     // Method to display a detailed monthly payslip
-    public static void displayPayslip(Employee employee) {
+    public static void displayPayslip(Employee employee, List<AttendanceRecord> attendanceRecords) {
         if (employee == null) {
             System.out.println("Employee not found for payslip generation.");
             return;
@@ -159,19 +193,21 @@ public class Motorphpayrollsystem {
 
         double basicSalary = employee.getSalary();
         double hourlyRate = employee.getHourlyRate();
-        double totalRenderedHours = employee.getTotalHoursWorked();
-        double overtimeHours = employee.getOvertimeHours();
-        double grossSalary = calculateGrossSalary(employee);
+        double totalRenderedHours = calculateTotalRenderedHours(attendanceRecords);
+        double overtimeHours = calculateTotalOvertimeHours(attendanceRecords);
+        double tardinessHours = calculateTotalTardiness(attendanceRecords);
+        double tardinessDeduction = calculateTotalTardinessDeductions(employee, attendanceRecords);
+
+        double grossSalary = calculateGrossSalary(employee, attendanceRecords);
 
         double sssDeduction = calculateSSSContribution(basicSalary);
         double philhealthDeduction = calculatePhilhealthContribution(basicSalary);
         double pagibigDeduction = calculatePagibigContribution(basicSalary);
-        double taxableIncome = grossSalary - sssDeduction - philhealthDeduction - pagibigDeduction;
+        double taxableIncome = grossSalary - sssDeduction - philhealthDeduction - pagibigDeduction - tardinessDeduction;
         double taxDeduction = calculateWithholdingTax(taxableIncome);
-        double totalDeductions = round(sssDeduction + philhealthDeduction + pagibigDeduction + taxDeduction);
 
+        double totalDeductions = round(sssDeduction + philhealthDeduction + pagibigDeduction + taxDeduction + tardinessDeduction);
         double netSalary = round(grossSalary - totalDeductions);
-
 
         System.out.println("\n--- Monthly Payslip for " + employee.getFullName() + " (ID: " + employee.getEmployeeId() + ") ---");
         System.out.println("----------------------------------------------------------");
@@ -188,11 +224,13 @@ public class Motorphpayrollsystem {
         System.out.printf("  PhilHealth Contribution: P %.2f%n", philhealthDeduction);
         System.out.printf("  Pag-IBIG Contribution: P %.2f%n", pagibigDeduction);
         System.out.printf("  Withholding Tax: P %.2f%n", taxDeduction);
+        System.out.printf("  Tardiness Deduction (%.2f hours): P %.2f%n", tardinessHours, tardinessDeduction);
         System.out.printf("Total Deductions: P %.2f%n", totalDeductions);
         System.out.println("----------------------------------------------------------");
         System.out.printf("NET MONTHLY SALARY: P %.2f%n", netSalary);
         System.out.println("----------------------------------------------------------");
     }
 }
+
 
 
