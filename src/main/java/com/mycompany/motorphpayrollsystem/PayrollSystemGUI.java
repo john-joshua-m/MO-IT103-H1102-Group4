@@ -329,11 +329,11 @@ public class PayrollSystemGUI extends JFrame {
              
              //Input data range to calculate pay within that payroll period only
              //Attendance file only contains records from 2024
-             JLabel startDate = new JLabel("Start Date (MM/dd/yyyy) :");
+             JLabel startDate = new JLabel("Enter Start Date and End Date of Payroll Period (MM/dd/yyyy) :");
              JTextField startDateField = new JTextField(10);
              startDateField.setToolTipText("Enter start date");
 
-             JLabel endDate = new JLabel("End Date (MM/dd/yyyy):");
+             JLabel endDate = new JLabel();
              JTextField endDateField = new JTextField(10);
              endDateField.setToolTipText("Enter end date");
 
