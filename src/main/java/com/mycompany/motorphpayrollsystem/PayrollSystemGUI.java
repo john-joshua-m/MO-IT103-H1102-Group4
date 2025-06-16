@@ -85,7 +85,6 @@ public class PayrollSystemGUI extends JFrame {
                  originalIcon = new ImageIcon("./resources/bg3.png");
             }
         } catch (Exception e) {
-            System.err.println("Error loading image from resources, trying file path: " + e.getMessage());
             originalIcon = new ImageIcon("./resources/bg3.png");
         }
 
@@ -135,7 +134,6 @@ public class PayrollSystemGUI extends JFrame {
         whitePanel.add(titleLabel);
         
         //Footer
-        
         JPanel redPanel = new JPanel();
         redPanel.setLayout(null);
         redPanel.setBackground(new Color(185, 0, 0)); // Red color 
@@ -330,6 +328,7 @@ public class PayrollSystemGUI extends JFrame {
              inputPanel.setBackground(new Color(240, 248, 255));
              
              //Input data range to calculate pay within that payroll period only
+             //Attendance file only contains records from 2024
              JLabel startDate = new JLabel("Start Date (MM/dd/yyyy) :");
              JTextField startDateField = new JTextField(10);
              startDateField.setToolTipText("Enter start date");
@@ -368,6 +367,7 @@ public class PayrollSystemGUI extends JFrame {
                      return;
                  }
                  
+                 //Initialized start and end dates so I can properly put try-catch blocks
                  LocalDate start;
                  LocalDate end;
                  
@@ -554,7 +554,6 @@ public class PayrollSystemGUI extends JFrame {
                         return;
                     }
                     
-                    
                      if (!firstName.matches("[a-zA-Z ]+")) { 
                         JOptionPane.showMessageDialog(addEmployeePanel, "Please enter only alphabets and spaces for the first name.", "Input Error", JOptionPane.ERROR_MESSAGE);
                         return; 
@@ -635,8 +634,6 @@ public class PayrollSystemGUI extends JFrame {
                         JOptionPane.showMessageDialog(addEmployeePanel, "Pag-IBIG Number must be exactly 12 digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     } //Should check for exact 12 digits entered
-                    
-                    
 
                         boolean success = employeeManager.addEmployee(id, firstName, lastName, birthday, position,
                                                                      hourlyRate, monthlySalary, sssNo, philhealthNo, tin, pagibigNo);
@@ -948,6 +945,7 @@ public class PayrollSystemGUI extends JFrame {
         return button;
     }
     
+    //This is for buttons inside the table
      private JButton createStyledButton2(String text) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 15));
