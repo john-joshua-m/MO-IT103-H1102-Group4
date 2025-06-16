@@ -969,7 +969,8 @@ public class PayrollSystemGUI extends JFrame {
 
     // --- Main method ---
     public static void main(String[] args) {
-        EmployeeManager.getInstance(); // Initialize EmployeeManager early
+        EmployeeManager.getInstance(); // Initialize EmployeeManager and Attendance Manager early to check if data is available
+        AttendanceManager.getInstance();
         SwingUtilities.invokeLater(() -> {
             new PayrollSystemGUI().setVisible(true);
         });
