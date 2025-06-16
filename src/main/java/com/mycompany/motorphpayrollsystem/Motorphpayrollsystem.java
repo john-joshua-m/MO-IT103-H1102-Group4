@@ -124,17 +124,21 @@ public class Motorphpayrollsystem {
         double totalRegularHours = 0;
         for (AttendanceRecord record : attendanceRecords) {
             double hoursWorked = Duration.between(record.getTimeIn(), record.getTimeOut()).toMinutes()/60.0;
-            totalRegularHours += Math.min(hoursWorked,8);
+            double finalHoursWorked = hoursWorked - 1.0; // Subtract 1 hour for lunch break
+            totalRegularHours += Math.min(finalHoursWorked,8);
         }
         return totalRegularHours;
     }
     
     public static double calculateTotalOvertimeHours(List<AttendanceRecord> attendanceRecords) {
         double totalOvertimeHours = 0;
+        
         for (AttendanceRecord record : attendanceRecords) {
             double hoursWorked = Duration.between(record.getTimeIn(), record.getTimeOut()).toMinutes()/60.0;
-            if(hoursWorked > 8) {
-                totalOvertimeHours += (hoursWorked - 8);
+            double finalHoursWorked = hoursWorked - 1.0; // Subtract 1 hour for lunch break
+            
+            if(finalHoursWorked > 8) {
+                totalOvertimeHours += (finalHoursWorked - 8);
             }
         }
         return totalOvertimeHours;
