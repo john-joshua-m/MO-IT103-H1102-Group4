@@ -25,6 +25,7 @@ import java.util.List;
 public class PayrollSystemGUI extends JFrame {
 
     private EmployeeManager employeeManager;
+    private UserManager userManager;
     private DefaultTableModel tableModel;
     private JTable employeeTable;
     private JPanel mainPanel;
@@ -50,8 +51,8 @@ public class PayrollSystemGUI extends JFrame {
 
     // Declare employee management buttons as instance variables for RBAC
     private JButton addEmployeeBtn;
-    private JButton updateEmployeeBtn;
     private JButton deleteBtn;
+    private JButton updateEmployee;
     
     // Declare button for employee's own attendance
     private JButton recordMyAttendanceBtn;
@@ -61,7 +62,11 @@ public class PayrollSystemGUI extends JFrame {
     // Declare viewAllBtn as an instance variable for RBAC
     private JButton viewAllBtn;
 
-
+    //Additional buttons declared for RBAC
+    private JButton logoutBtn;
+    private JButton exitBtn;
+    private JButton viewProfileBtn;
+    
     // --- Constructor ---
     public PayrollSystemGUI() {
         setTitle("MotorPH Employee Payroll System");
@@ -81,9 +86,9 @@ public class PayrollSystemGUI extends JFrame {
         setupWelcomePanel();
         setupViewAllEmployeesPanel();
         setupAddEmployeePanel();
-        setupAddUserPanel(); 
+        //setupAddUserPanel(); 
 
-        this.setVisible(false); // Keep main GUI hidden until login is successful
+        buttonPanel.removeAll(); // remove all buttons first when opening the system
 
         SwingUtilities.invokeLater(() -> {
             LoginGUI loginFrame = new LoginGUI(this);
@@ -122,15 +127,50 @@ public class PayrollSystemGUI extends JFrame {
 
     // Role-Based Access Control
     private void applyRoleBasedAccess(String role) {
+        
+        buttonPanel.removeAll(); // remove all buttons everytime user logs out
+        
         boolean isAdmin = "IT Admin".equalsIgnoreCase(role); 
         boolean isHR = "HR".equalsIgnoreCase(role);
         boolean isEmployee = "Employee".equalsIgnoreCase(role);
         boolean isManager = "Manager".equalsIgnoreCase(role);
 
         System.out.println("DEBUG: PayrollSystemGUI - Applying role-based access for role: " + role);
+        
+        
+        
+        if (!isAdmin || !isHR) {
+            updateEmployee.setEnabled(false);
+        }
+        
+        if (isAdmin || isHR) {
+            updateEmployee.setEnabled(true);
+        }
+        
+        if (isAdmin || isHR || isManager) {
+            buttonPanel.add(addEmployeeBtn);
+            buttonPanel.add(deleteBtn);           
+        }
+        
+        if (isEmployee) {
+            buttonPanel.add(recordMyAttendanceBtn);
+            buttonPanel.add(viewProfileBtn);
+            
+        }
+        
+        if (!isEmployee) {
+            buttonPanel.add(viewAllBtn);
+        }
+        
+        if (isAdmin || isHR || isManager || isEmployee) {
+            buttonPanel.add(logoutBtn); 
+            buttonPanel.add(exitBtn);
+        }
 
-        // Control visibility of the Add User Account button (IT Admin & HR)
-        if (addUserAccountBtn != null) {
+        //Control visibility of the Add User Account button (IT Admin & HR)
+        
+        
+        /*if (addUserAccountBtn != null) {
             addUserAccountBtn.setVisible(isAdmin || isHR); 
         }
 
@@ -160,8 +200,8 @@ public class PayrollSystemGUI extends JFrame {
 
         if (viewAllBtn != null) {
             viewAllBtn.setVisible(!isEmployee); // Visible for all roles EXCEPT Employee
-        }
-    }
+        } */
+    } 
 
 
     // --- Panel Setups ---
@@ -223,8 +263,8 @@ public class PayrollSystemGUI extends JFrame {
         welcomeTitleLabel.setForeground(Color.WHITE);
         imageLabel.add(welcomeTitleLabel);
 
-        // User Role / Slogan Label
-        userRoleLabel = new JLabel("Please select an option to get started.", SwingConstants.LEFT);
+        // Second line that will be updated once logged in
+        userRoleLabel = new JLabel("Please login first to get started.", SwingConstants.LEFT);
         userRoleLabel.setBounds(70, 320, 600, 35);
         userRoleLabel.setFont(new Font("Arial", Font.PLAIN, 20));
         userRoleLabel.setForeground(Color.WHITE);
@@ -291,32 +331,20 @@ public class PayrollSystemGUI extends JFrame {
         // Create the buttons and assign them to instance variables
         viewAllBtn = createStyledButton("View All Employees"); // Assigned to instance variable
         addEmployeeBtn = createStyledButton("Add New Employee"); // Assigned to instance variable
-        updateEmployeeBtn = createStyledButton("Update Employee"); // Assigned to instance variable
         deleteBtn = createStyledButton("Delete Employee"); // Assigned to instance variable
-        addUserAccountBtn = createStyledButton("Add User Account"); // Declared as class field
         recordMyAttendanceBtn = createStyledButton("Record My Attendance"); // NEW Button
-        JButton logoutBtn = createStyledButton("Logout");
-        JButton exitBtn = createStyledButton("Exit");
+        logoutBtn = createStyledButton("Logout");
+        exitBtn = createStyledButton("Exit");
+        viewProfileBtn = createStyledButton("View Profile"); //NEW BUTTON
 
 
         // Add ActionListeners
         viewAllBtn.addActionListener(e -> showPanel("ViewAll"));
         addEmployeeBtn.addActionListener(e -> showPanel("AddEmployee"));
-        updateEmployeeBtn.addActionListener (e -> {
-            int selectedRow = employeeTable.getSelectedRow();
-             if (selectedRow != -1) {
-                 int empId = Integer.parseInt(employeeTable.getValueAt (selectedRow, 0). toString());
-                 Employee employeeToEdit = employeeManager.getEmployeeById(empId);
-                 if (employeeToEdit != null) {
-                     setupUpdateEmployeePanel (employeeToEdit);
-                     showPanel("UpdateEmployee");
-                 } else {
-                   JOptionPane.showMessageDialog(this, "Employee not found.", "Error", JOptionPane.ERROR_MESSAGE);
-                  }
-              } else {
-                  JOptionPane.showMessageDialog(this, "Please select an employee first.", "Warning", JOptionPane.WARNING_MESSAGE);
-              }
-        });
+        logoutBtn.addActionListener(e -> logout());
+        exitBtn.addActionListener(e -> System.exit(0));
+        
+        //For delete button
         deleteBtn.addActionListener(e -> {
             try {
                 delete();
@@ -324,7 +352,6 @@ public class PayrollSystemGUI extends JFrame {
                 JOptionPane.showMessageDialog(null, "Error deleting employee: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
-        addUserAccountBtn.addActionListener(e -> showPanel("AddUser"));
         
         // NEW Action Listener for "Record My Attendance"
         recordMyAttendanceBtn.addActionListener(e -> {
@@ -349,18 +376,37 @@ public class PayrollSystemGUI extends JFrame {
             }
         });
 
-        logoutBtn.addActionListener(e -> logout());
-        exitBtn.addActionListener(e -> System.exit(0));
+       // For View Profile Button
+       viewProfileBtn.addActionListener (e -> {
+           if (loggedInUser != null && "Employee".equalsIgnoreCase(loggedInUser.getRole())) {
+               // Directly use the employeeId from the loggedInUser object
+                int empId = loggedInUser.getEmployeeId(); 
+                if (empId > 0) { // Check if a valid employeeId is linked
+                    Employee employee = employeeManager.getEmployeeById(empId);
+                    if (employee != null) { 
+                         new ViewProfile(loggedInUser, employeeManager);                        
+                    } else {
+                        // This case implies an employeeId is linked to the user account
+                        // but no matching employee record is found in employees.csv
+                        JOptionPane.showMessageDialog(this, "Your linked Employee ID (" + empId + ") was not found in the employee records. Please check your user account configuration.", "Data Mismatch Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                     JOptionPane.showMessageDialog(this, "Your user account is not linked to an Employee ID. Please contact HR/IT Admin to link your account to an employee record.", "Missing Employee ID", JOptionPane.WARNING_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "This function is only for Employees.", "Access Denied", JOptionPane.WARNING_MESSAGE);
+            }
+       });
+        
 
         // Add buttons to the button panel
         buttonPanel.add(viewAllBtn);
         buttonPanel.add(addEmployeeBtn);
-        buttonPanel.add(updateEmployeeBtn);
         buttonPanel.add(deleteBtn);
         buttonPanel.add(recordMyAttendanceBtn); 
-        buttonPanel.add(addUserAccountBtn);
         buttonPanel.add(logoutBtn);
         buttonPanel.add(exitBtn);
+        buttonPanel.add(viewProfileBtn);
 
         imageLabel.add(buttonPanel); // Place buttons directly on top of the background image
 
@@ -370,7 +416,7 @@ public class PayrollSystemGUI extends JFrame {
     private void updateWelcomePanel() {
         if (loggedInUser != null) {
             if (welcomeTitleLabel != null) {
-                welcomeTitleLabel.setText("<html>Welcome, " + loggedInUser.getFirstName() + "!</html>");
+                welcomeTitleLabel.setText("<html>Welcome, " + loggedInUser.getFirstName() + "!</html><br>Please select option to get started!");
                 System.out.println("DEBUG: PayrollSystemGUI - updateWelcomePanel. User is NOT null. Displaying firstName: '" + loggedInUser.getFirstName() + "' and role: '" + loggedInUser.getRole() + "'");
             } else {
                 System.err.println("ERROR: PayrollSystemGUI - welcomeTitleLabel is null! Cannot update welcome message.");
@@ -391,7 +437,7 @@ public class PayrollSystemGUI extends JFrame {
             }
 
             if (userRoleLabel != null) {
-                userRoleLabel.setText("Please select an option to get started.");
+                userRoleLabel.setText("Please login first to get started.");
             } else {
                 System.err.println("ERROR: PayrollSystemGUI - userRoleLabel is null for slogan!");
             }
@@ -433,7 +479,7 @@ public class PayrollSystemGUI extends JFrame {
         JButton refreshBtn = createStyledButton2("Refresh Records");
         JButton backBtn = createStyledButton2("Back to Main Menu");
         JButton viewEmployee = createStyledButton2("View Employee");
-        JButton updateEmployee = createStyledButton2("Update Details");
+        updateEmployee = createStyledButton2("Update Details"); // Declared as class variable
         
         // Assign to instance variable so applyRoleBasedAccess can control it
         attendanceBtn = createStyledButton2("Record Attendance"); 
@@ -472,8 +518,10 @@ public class PayrollSystemGUI extends JFrame {
            if (selectedRow != -1) {
                int empId = Integer.parseInt(employeeTable.getValueAt (selectedRow, 0). toString());
                Employee employeeToEdit = employeeManager.getEmployeeById(empId);
+               User userToEdit = UserManager.getInstance().getUserById(employeeToEdit.getEmployeeId());
+
                if (employeeToEdit != null) {
-                   setupUpdateEmployeePanel (employeeToEdit);
+                   setupUpdateEmployeePanel (employeeToEdit, userToEdit);
                    showPanel("UpdateEmployee");
                } else {
                  JOptionPane.showMessageDialog(this, "Employee not found.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -621,7 +669,9 @@ public class PayrollSystemGUI extends JFrame {
                      double totalDeductions = Motorphpayrollsystem.round(tardinessDeduction + sssDeduction + philhealthDeduction + pagibigDeduction + taxDeduction);
 
                      double netSalary = Motorphpayrollsystem.round(grossSalary - totalDeductions);
-
+                     
+                     
+                     //Display payslip
                      StringBuilder payslipText = new StringBuilder();
                      payslipText.append(String.format("--- Payslip for %s (ID: %d) ---%n", employee.getFullName(), employee.getEmployeeId()));
                      payslipText.append(String.format("Period: %s to %s%n", startDateInput, endDateInput));
@@ -642,6 +692,28 @@ public class PayrollSystemGUI extends JFrame {
                      payslipText.append(String.format("  Withholding Tax: P %.2f%n", taxDeduction));
                      payslipText.append(String.format("Total Deductions: P %.2f%n", totalDeductions));
                      payslipText.append(String.format("NET SALARY: P %.2f%n", netSalary));
+                     
+                     
+                     // Display attenddance breakdown after the payslip display
+                     payslipText.append("\n----------------------------------------------------------\n");
+                     payslipText.append("Attendance Records:\n");
+                     payslipText.append(String.format("%-12s %-10s %-10s %-10s %-10s %-10s%n", 
+                            "Date", "Log In", "Log Out", "Hours", "Mins", "Total Time"));
+                     payslipText.append("----------------------------------------------------------\n");
+
+                     DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+                     DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a");
+
+                     for (AttendanceRecord record : filteredRecords) {
+                         long hours = java.time.Duration.between(record.getTimeIn(), record.getTimeOut()).toHours();
+                         long mins = java.time.Duration.between(record.getTimeIn(), record.getTimeOut()).toMinutesPart();
+                         String date = record.getDate().format(dateFormatter);
+                         String in = record.getTimeIn().format(timeFormatter);
+                         String out = record.getTimeOut().format(timeFormatter);
+                         payslipText.append(String.format("%-12s %-10s %-10s %-10d %-10d %s%n",
+                                 date, in, out, hours, mins, String.format("%d hrs %d mins", hours, mins)));
+                     } 
+
 
                      payslipArea.setText(payslipText.toString());
 
@@ -689,6 +761,13 @@ public class PayrollSystemGUI extends JFrame {
         JTextField philhealthNoField = new JTextField(15);
         JTextField tinField = new JTextField(15);
         JTextField pagibigNoField = new JTextField(15);
+        JTextField usernameField = new JTextField(15);
+        JPasswordField passwordField = new JPasswordField(15);
+        
+        // Dropdown for Role Selection
+        String[] roles = {"Employee", "Manager", "HR", "IT Admin"}; 
+        JComboBox<String> roleComboBox = new JComboBox<>(roles);
+        roleComboBox.setSelectedIndex(0); // Default to "Employee"        
 
         formPanel.add(new JLabel("Employee ID:"));
         formPanel.add(idField);
@@ -712,6 +791,13 @@ public class PayrollSystemGUI extends JFrame {
         formPanel.add(tinField);
         formPanel.add(new JLabel("Pag-IBIG No:"));
         formPanel.add(pagibigNoField);
+        formPanel.add(new JLabel("Username:"));
+        formPanel.add(usernameField);
+        formPanel.add(new JLabel("Password:"));
+        formPanel.add(passwordField);
+        formPanel.add(new JLabel("Role:"));
+        formPanel.add(roleComboBox);
+        
 
         addEmployeePanel.add(formPanel, BorderLayout.CENTER);
 
@@ -736,6 +822,9 @@ public class PayrollSystemGUI extends JFrame {
                     String philhealthNo = philhealthNoField.getText().trim();
                     String tin = tinField.getText().trim();
                     String pagibigNo = pagibigNoField.getText().trim();
+                    String username = usernameField.getText().trim();
+                    String password = new String(passwordField.getPassword()).trim();
+                    String role = (String) roleComboBox.getSelectedItem();
 
                     if (firstName.isEmpty() || lastName.isEmpty() || birthday.isEmpty() || position.isEmpty() ||
                         sssNo.isEmpty() || philhealthNo.isEmpty() || tin.isEmpty() || pagibigNo.isEmpty()) {
@@ -814,13 +903,38 @@ public class PayrollSystemGUI extends JFrame {
                         JOptionPane.showMessageDialog(addEmployeePanel, "Pag-IBIG Number must be exactly 12 digits.", "Input Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
-
-                    boolean success = employeeManager.addEmployee(id, firstName, lastName, birthday, position,
+                    
+                    // Input validation for user account creation
+                    if (username.isEmpty() || password.isEmpty() || role.isEmpty()) {
+                        JOptionPane.showMessageDialog(addUserPanel, "All fields are required!", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    if (!username.matches("^[a-zA-Z0-9._-]+$")) {
+                        JOptionPane.showMessageDialog(addUserPanel, "Username can only contain letters, numbers, dots, underscores, and hyphens.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    if (password.length() < 6) {
+                        JOptionPane.showMessageDialog(addUserPanel, "Password must be at least 6 characters long.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
+                    //Save to employee CSV
+                    boolean empSuccess = employeeManager.addEmployee(id, firstName, lastName, birthday, position,
                                                                   hourlyRate, monthlySalary, sssNo, philhealthNo, tin, pagibigNo);
-                    if (success) {
-                        JOptionPane.showMessageDialog(addEmployeePanel, "Employee added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    if (empSuccess) {
+                        
+                    boolean userSuccess = UserManager.getInstance().addUser(username, password, role, firstName, lastName, id);
+                    
+                    if (userSuccess) {
+                        JOptionPane.showMessageDialog(addEmployeePanel, "Employee and user account added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                         clearForm(idField, firstNameField, lastNameField, birthdayField, positionField, hourlyRateField,
-                                  monthlySalaryField, sssNoField, philhealthNoField, tinField, pagibigNoField);
+                                  monthlySalaryField, sssNoField, philhealthNoField, tinField, pagibigNoField); 
+                        usernameField.setText("");
+                        passwordField.setText("");
+                        roleComboBox.setSelectedIndex(0); // Reset to default role
+                        } else {
+                            JOptionPane.showMessageDialog(addEmployeePanel, "Employee saved, but user account creation failed. Username might already exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                       }        
                     } else {
                         JOptionPane.showMessageDialog(addEmployeePanel, "Failed to add employee. ID might already exist.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -828,9 +942,11 @@ public class PayrollSystemGUI extends JFrame {
                     JOptionPane.showMessageDialog(addEmployeePanel, "Invalid number format for ID, Hourly Rate, or Monthly Salary.", "Input Error", JOptionPane.ERROR_MESSAGE);
                 } catch (IOException ex) {
                     Logger.getLogger(PayrollSystemGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
+                }                
+            }          
         });
+        
+       
 
         clearBtn.addActionListener(e -> clearForm(idField, firstNameField, lastNameField, birthdayField, positionField, hourlyRateField,
                                                  monthlySalaryField, sssNoField, philhealthNoField, tinField, pagibigNoField));
@@ -843,7 +959,7 @@ public class PayrollSystemGUI extends JFrame {
         mainPanel.add(addEmployeePanel, "AddEmployee");
     }
 
-    private void setupUpdateEmployeePanel (Employee employeeToEdit) {
+    private void setupUpdateEmployeePanel (Employee employeeToEdit, User userToEdit) {
        updateEmployeePanel = new JPanel(new BorderLayout(10, 10));
        updateEmployeePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
        updateEmployeePanel.setBackground(new Color(240,248,255));
@@ -867,6 +983,13 @@ public class PayrollSystemGUI extends JFrame {
         JTextField philhealthNoField = new JTextField(employeeToEdit.getPhilhealthNo());
         JTextField tinField = new JTextField(employeeToEdit.getTin());
         JTextField pagibigNoField = new JTextField(employeeToEdit.getPagibigNo());
+        JTextField usernameField = new JTextField(userToEdit.getUsername());
+        JPasswordField passwordField = new JPasswordField(userToEdit.getPassword());
+        JComboBox<String> roleComboBox = new JComboBox<>(new String[]{"Employee", "Manager", "HR", "IT Admin"});
+        if (userToEdit != null) {
+                roleComboBox.setSelectedItem(userToEdit.getRole());
+        }       
+      
 
         formPanel.add(new JLabel("First Name:"));
         formPanel.add(firstNameField);
@@ -888,6 +1011,13 @@ public class PayrollSystemGUI extends JFrame {
         formPanel.add(tinField);
         formPanel.add(new JLabel("Pag-IBIG No:"));
         formPanel.add(pagibigNoField);
+        formPanel.add(new JLabel("Username:"));
+        formPanel.add(usernameField);
+        formPanel.add(new JLabel("Password:"));
+        formPanel.add(passwordField);
+        formPanel.add(new JLabel("Role:"));
+        formPanel.add(roleComboBox);
+
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
@@ -912,17 +1042,38 @@ public class PayrollSystemGUI extends JFrame {
                          String newPhilhealthNo = philhealthNoField.getText();
                          String newTin = tinField.getText();
                          String newPagibigNo = pagibigNoField.getText();
+                         String newUsername = usernameField.getText().trim();
+                         String newPassword = new String(passwordField.getPassword()).trim();
+                         String newRole = (String) roleComboBox.getSelectedItem();
+                         
+                         // Update employee CSV
+                         boolean empUpdated = false;
                          try {
-                             employeeManager.editEmployee(employeeToEdit.getEmployeeId(), newFirstName, newLastName, newBirthday, newPosition, newHourlyRate,
-                                         newSalary, newSssNo, newPhilhealthNo, newTin, newPagibigNo);
+                             empUpdated = employeeManager.editEmployee(employeeToEdit.getEmployeeId(), newFirstName, newLastName, newBirthday, newPosition, newHourlyRate, 
+                                                                      newSalary, newSssNo, newPhilhealthNo, newTin, newPagibigNo);
                          } catch (IOException ex) {
                              Logger.getLogger(PayrollSystemGUI.class.getName()).log(Level.SEVERE, null, ex);
+                             JOptionPane.showMessageDialog(null, "Employee " + employeeToEdit.getEmployeeId() + " details updated.");
+                             return;
                          }
-                         JOptionPane.showMessageDialog(null, "Employee " + employeeToEdit.getEmployeeId() + " details updated.");
+                         
+                         // Update User CSV
+                         
+                         boolean userUpdated = UserManager.getInstance().editUser(employeeToEdit.getEmployeeId(), newUsername, newPassword, newRole, newLastName, newFirstName);
+                         
+                         if (empUpdated && userUpdated){
+                             JOptionPane.showMessageDialog(null, "Employee and user account udapted successdully");
+                         } else if (empUpdated) {
+                             JOptionPane.showMessageDialog(null, "Employee updated, but user update failed.", "Warning", JOptionPane.WARNING_MESSAGE);
+                         } else {
+                             JOptionPane.showMessageDialog(null, "Update failed.", "Error", JOptionPane.ERROR_MESSAGE);
+                         }
+                         
                      } catch (NumberFormatException ex) {
-                         JOptionPane.showMessageDialog(null, "Invalid input.", "Error", JOptionPane.ERROR_MESSAGE);
+                         JOptionPane.showMessageDialog(null, "Invalid input. Please check if your inputs are in the correct format.", "Error", JOptionPane.ERROR_MESSAGE);
                      }
         });
+        
         updateEmployeePanel.add(formPanel, BorderLayout.CENTER);
         buttonPanel.add(updateBtn);
         buttonPanel.add(backButton);
@@ -934,7 +1085,7 @@ public class PayrollSystemGUI extends JFrame {
     }
 
 
-    private void setupAddUserPanel() {
+   /*  private void setupAddUserPanel() {
         addUserPanel = new JPanel(new BorderLayout(10, 10));
         addUserPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         addUserPanel.setBackground(new Color(240, 248, 255));
@@ -1079,7 +1230,7 @@ public class PayrollSystemGUI extends JFrame {
         addUserPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         mainPanel.add(addUserPanel, "AddUser"); // Add the new panel to the CardLayout
-    }
+    } */
 
 
     //Panel for recording time in and time out
@@ -1271,7 +1422,7 @@ public class PayrollSystemGUI extends JFrame {
     }
 
     //This is for buttons inside the table
-      private JButton createStyledButton2(String text) {
+    private JButton createStyledButton2(String text) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 15));
         button.setBackground(new Color(0, 0, 90));
@@ -1294,8 +1445,15 @@ public class PayrollSystemGUI extends JFrame {
 
     // --- Main method ---
     public static void main(String[] args) {
-        EmployeeManager.getInstance(); // Initialize EmployeeManager and Attendance Manager early to check if data is available
+        // Initialize EmployeeManager and Attendance Manager early to check if data is available
+        EmployeeManager employeeManager = EmployeeManager.getInstance(); 
+        UserManager userManager = UserManager.getInstance();        
         AttendanceManager.getInstance();
+        
+        //Syncs data from employee to user.csv 
+        List<Employee> employees = employeeManager.getEmployees();
+        userManager.retrieveDataFromEmployees(employees);
+              
         SwingUtilities.invokeLater(() -> {
             new PayrollSystemGUI().setVisible(true);
         });
