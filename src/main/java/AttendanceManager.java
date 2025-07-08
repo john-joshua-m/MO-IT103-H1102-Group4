@@ -39,6 +39,15 @@ public class AttendanceManager {
        return instance; 
      }
      
+     /* public AttendanceRecord getEmployeeById(int employeeId) {
+        for (AttendanceRecord record : attendanceRecords) {
+            if (record.getEmployeeId() == employeeId) {
+                return record;
+            }
+        }
+        return null;
+    } */
+     
     public void loadAttendanceFromFile() {
           try (CSVReader reader = new CSVReader(new FileReader(attendanceCsv))) {
               DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a"); 
@@ -105,6 +114,7 @@ public class AttendanceManager {
     
     //---- Attendance Management Methods-----
     
+    
     public boolean addAttendanceRecord(AttendanceRecord newRecord) {
         try {
             // Check if the date for that employee is already recorded
@@ -137,8 +147,7 @@ public class AttendanceManager {
     
     public List<AttendanceRecord> getAllAttendanceRecords() {
         return new ArrayList<>(attendanceRecords); // Return a copy to prevent modification
-    }
-
+    }    
     
 }
 
