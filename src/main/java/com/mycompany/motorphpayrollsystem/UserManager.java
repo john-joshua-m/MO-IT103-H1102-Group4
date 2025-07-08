@@ -36,7 +36,46 @@ public class UserManager {
         }
         return instance;
     }
-
+    
+    public User getUserById(int employeeId) {
+        for (User user : users) {
+            if (user.getEmployeeId() == employeeId) {
+                return user;
+            }
+        }
+        return null;
+    }
+    
+    // Syncs employee data (ID & name) from employee.csv into user.csv 
+    public void retrieveDataFromEmployees (List<Employee> employees) {
+        for (Employee emp : employees) {
+            int empId = emp.getEmployeeId();
+            String firstName = emp.getFirstName();
+            String lastName = emp.getLastName();
+            
+            // Check if this employee already exists in users.csv
+            boolean exists = false;
+            for (User user: users) {
+                if (user.getEmployeeId() == empId) {
+                    exists = true;
+                    break;                    
+                }
+            }
+            
+            if (!exists){
+                //
+                users.add(new User("", "", "", firstName, lastName, empId));
+            }        
+        }
+        
+        try {
+            saveUsersToFile();
+            System.out.println("User.csv successfully retrieves data.");
+        } catch (IOException e) {
+            Logger.getLogger(UserManager.class.getName()).log(Level.SEVERE, "Error retrieving data from employee.csv file.", e);
+        }
+    }
+    
     /**
      * Loads user data from the CSV file into the 'users' list.
      * This method is now PUBLIC to be callable from outside the class (e.g., LoginGUI).
@@ -48,11 +87,11 @@ public class UserManager {
             System.out.println("User CSV file not found. Initializing with default users.");
             try {
 
-                users.add(new User("admin", "adminpass", "IT Admin", "IT Admin", 0)); // IT Admin
-                users.add(new User("employee1", "emppass", "Employee", "Juan", 10005)); // Link to Juan (Employee ID 10005)
-                users.add(new User("hr.motorph", "hrpass", "HR", "Jane", 0)); // HR
-                users.add(new User("manager.motorph", "managerpass", "Manager", "John", 0)); // Manager
-                users.add(new User("employee2", "emppass2", "Employee", "Manuel", 10001)); // Link to Manuel (Employee ID 10001)
+                users.add(new User("admin", "adminpass", "IT Admin", "IT Admin", "", 0)); // IT Admin
+                users.add(new User("employee1", "emppass", "Employee", "Juan","", 10005)); // Link to Juan (Employee ID 10005)
+                users.add(new User("hr.motorph", "hrpass", "HR", "Jane","", 0)); // HR
+                users.add(new User("manager.motorph", "managerpass", "Manager", "John","", 0)); // Manager
+                users.add(new User("employee2", "emppass2", "Employee", "Manuel","", 10001)); // Link to Manuel (Employee ID 10001)
 
                 saveUsersToFile(); // Save these default users to the new file
                 System.out.println("Default users created and saved to " + USERS_FILE);
@@ -108,7 +147,7 @@ public class UserManager {
         String tempFile = USERS_FILE + ".tmp";
         try (CSVWriter writer = new CSVWriter(new FileWriter(tempFile))) {
             // Write header (updated to include FirstName and EmployeeId)
-            String[] header = {"Username", "Password", "Role", "FirstName", "EmployeeId"};
+            String[] header = {"Username", "Password", "Role", "FirstName", "Last Name", "EmployeeId"};
             writer.writeNext(header);
 
             // Write user data
@@ -140,7 +179,7 @@ public class UserManager {
      * Please note that yung add user na button na to is different from add employee. 
      * This is for the actual payroll system access account
      */
-    public boolean addUser(String username, String password, String role, String firstName, int employeeId) throws IOException {
+    public boolean addUser(String username, String password, String role, String firstName, String lastName, int employeeId) throws IOException {
         // Check if username already exists (case-insensitive)
         for (User user : users) {
             if (user.getUsername().equalsIgnoreCase(username)) {
@@ -148,11 +187,32 @@ public class UserManager {
                 return false;
             }
         }
-        User newUser = new User(username, password, role, firstName, employeeId); // Pass employeeId to User constructor
+        User newUser = new User(username, password, role, firstName, lastName, employeeId); // Pass employeeId to User constructor
         users.add(newUser);
         saveUsersToFile(); // Save immediately after adding
         System.out.println("User '" + username + "' added successfully.");
         return true;
+    }
+    
+    public boolean editUser (int employeeId, String newUsername, String newPassword, String newRole, String newFirstName, String newLastName) {
+        for (User user : users) {
+         if (user.getEmployeeId()== employeeId) {
+             user.setUsername(newUsername);
+             user.setPassword(newPassword);
+             user.setRole(newRole);
+             user.setFirstName(newFirstName);
+             user.setLastName(newLastName);
+             
+             try {
+                 saveUsersToFile();
+                 return true;
+             } catch (IOException e) {
+                 Logger.getLogger(UserManager.class.getName()).log(Level.SEVERE, null, e);
+                 return false;
+             }  
+         }          
+       }      
+        return false;        
     }
 
     /**
