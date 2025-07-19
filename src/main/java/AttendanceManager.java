@@ -27,7 +27,7 @@ public class AttendanceManager {
     private List<AttendanceRecord> attendanceRecords;
     private static final String attendanceCsv = "attendance.csv";
     
-    private AttendanceManager() {
+    AttendanceManager() {
         attendanceRecords = new ArrayList<>();
         loadAttendanceFromFile();
     }
@@ -39,14 +39,14 @@ public class AttendanceManager {
        return instance; 
      }
      
-     public AttendanceRecord getEmployeeById(int employeeId) {
+    public AttendanceRecord getEmployeeById(int employeeId) {
         for (AttendanceRecord record : attendanceRecords) {
             if (record.getEmployeeId() == employeeId) {
                 return record;
             }
         }
         return null;
-    }
+    } 
      
     public void loadAttendanceFromFile() {
           try (CSVReader reader = new CSVReader(new FileReader(attendanceCsv))) {
@@ -107,14 +107,12 @@ public class AttendanceManager {
           if (!temp.renameTo(originalFile)) {
               System.err.println("Failed to rename temporary attendance file to original CSV file.");
           } else {
-              System.out.println("New attendnace record saved to " + attendanceCsv);
+              System.out.println("New attendance record saved to " + attendanceCsv);
             
         }
     }
     
     //---- Attendance Management Methods-----
-    
-    
     public boolean addAttendanceRecord(AttendanceRecord newRecord) {
         try {
             // Check if the date for that employee is already recorded
@@ -148,6 +146,17 @@ public class AttendanceManager {
     public List<AttendanceRecord> getAllAttendanceRecords() {
         return new ArrayList<>(attendanceRecords); // Return a copy to prevent modification
     }    
+    
+    public boolean deleteRecord(int employeeId) throws IOException {
+        boolean removed = attendanceRecords.removeIf(e -> e.getEmployeeId() == employeeId);
+        if (removed) {
+            saveAttendanceRecordToFile(); // Save changes after deleting
+            System.out.println("Attendance Records of Employee " + employeeId + " deleted successfully.");
+        } else {
+            System.out.println("Attendance Records of Employee " + employeeId + " not found.");
+        }
+        return removed;
+    }
     
 }
 
