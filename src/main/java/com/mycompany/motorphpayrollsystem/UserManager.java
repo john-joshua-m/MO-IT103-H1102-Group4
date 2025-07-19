@@ -227,9 +227,19 @@ public class UserManager {
         }
         return null; // Authentication failed
     }
-
  
     public List<User> getUsers() {
         return Collections.unmodifiableList(new ArrayList<>(users)); // Return a copy to prevent external modification
+    }
+    
+    public boolean deleteUser(int employeeId) throws IOException {
+        boolean removed = users.removeIf(e -> e.getEmployeeId() == employeeId);
+        if (removed) {
+            saveUsersToFile(); // Save changes after deleting
+            System.out.println("Account of Employee " + employeeId + " deleted successfully.");
+        } else {
+            System.out.println("Account of Employee " + employeeId + " not found.");
+        }
+        return removed;
     }
 }
