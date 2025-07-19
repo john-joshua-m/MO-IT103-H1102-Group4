@@ -26,6 +26,7 @@ public class PayrollSystemGUI extends JFrame {
 
     private EmployeeManager employeeManager;
     private UserManager userManager;
+    private AttendanceManager attendanceManager;
     private DefaultTableModel tableModel;
     private JTable employeeTable;
     private JPanel mainPanel;
@@ -74,11 +75,11 @@ public class PayrollSystemGUI extends JFrame {
         setResizable(true); // Allow resizing for responsive layout testing
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-
-        employeeManager = EmployeeManager.getInstance();
-        // Ensure UserManager is also initialized if it's a Singleton
-        UserManager.getInstance(); // Initialize UserManager to load existing users
-
+        
+        attendanceManager = AttendanceManager.getInstance(); // Initialize AttendanceManager to load existing attendancce records of employees
+        employeeManager = EmployeeManager.getInstance(); // Initialize EmployeeManager to load existing employees
+        userManager = UserManager.getInstance(); // Initialize UserManager to load existing users
+        
         mainPanel = new JPanel(new CardLayout());
         add(mainPanel);
 
@@ -137,7 +138,9 @@ public class PayrollSystemGUI extends JFrame {
 
         System.out.println("DEBUG: PayrollSystemGUI - Applying role-based access for role: " + role);
         
-        
+        if (!isEmployee) {
+            buttonPanel.add(viewAllBtn);
+        }
         
         if (!isAdmin || !isHR) {
             updateEmployee.setEnabled(false);
@@ -155,11 +158,6 @@ public class PayrollSystemGUI extends JFrame {
         if (isEmployee) {
             buttonPanel.add(recordMyAttendanceBtn);
             buttonPanel.add(viewProfileBtn);
-            
-        }
-        
-        if (!isEmployee) {
-            buttonPanel.add(viewAllBtn);
         }
         
         if (isAdmin || isHR || isManager || isEmployee) {
@@ -167,40 +165,6 @@ public class PayrollSystemGUI extends JFrame {
             buttonPanel.add(exitBtn);
         }
 
-        //Control visibility of the Add User Account button (IT Admin & HR)
-        
-        
-        /*if (addUserAccountBtn != null) {
-            addUserAccountBtn.setVisible(isAdmin || isHR); 
-        }
-
-        // Control visibility of Employee Management buttons (IT Admin, HR, Manager)
-        boolean canManageEmployees = isAdmin || isHR || isManager;
-
-        if (addEmployeeBtn != null) {
-            addEmployeeBtn.setVisible(canManageEmployees);
-        }
-        if (updateEmployeeBtn != null) {
-            updateEmployeeBtn.setVisible(canManageEmployees);
-        }
-        if (deleteBtn != null) {
-            deleteBtn.setVisible(canManageEmployees);
-        }
-
-        // Control visibility for "Record My Attendance" button (only for Employee role)
-        if (recordMyAttendanceBtn != null) {
-            recordMyAttendanceBtn.setVisible(isEmployee);
-        }
-
-        // Control visibility for the general "Record Attendance" button (for other employees)
-        // This button is in the View All Employees panel and allows managing others' attendance
-        if (attendanceBtn != null) { 
-            attendanceBtn.setVisible(canManageEmployees);
-        }
-
-        if (viewAllBtn != null) {
-            viewAllBtn.setVisible(!isEmployee); // Visible for all roles EXCEPT Employee
-        } */
     } 
 
 
@@ -1084,155 +1048,6 @@ public class PayrollSystemGUI extends JFrame {
 
     }
 
-
-   /*  private void setupAddUserPanel() {
-        addUserPanel = new JPanel(new BorderLayout(10, 10));
-        addUserPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        addUserPanel.setBackground(new Color(240, 248, 255));
-
-        JLabel titleLabel = new JLabel("Add New User Account", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(new Color(0, 51, 102));
-        addUserPanel.add(titleLabel, BorderLayout.NORTH);
-
-        JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10)); // Layout for input fields
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
-        formPanel.setBackground(new Color(240, 248, 255));
-
-        JTextField usernameField = new JTextField(15);
-        JPasswordField passwordField = new JPasswordField(15);
-        JTextField firstNameField = new JTextField(15); // For associating a first name with the user account
-        JTextField employeeIdField = new JTextField(15); // Important, para ma record ni employee on his/her own yung attendance. Employee field
-
-        // Dropdown for Role Selection
-        String[] roles = {"Employee", "Manager", "HR", "IT Admin"}; 
-        JComboBox<String> roleComboBox = new JComboBox<>(roles);
-        roleComboBox.setSelectedIndex(0); // Default to "Employee"
-
-        // Listener to enable/disable employeeIdField based on selected role
-        roleComboBox.addActionListener(e -> {
-            String selectedRole = (String) roleComboBox.getSelectedItem();
-            employeeIdField.setEnabled("Employee".equalsIgnoreCase(selectedRole));
-            if (!employeeIdField.isEnabled()) {
-                employeeIdField.setText("0"); // Set to 0 if not an employee
-            } else {
-                employeeIdField.setText(""); // Clear if it's an employee
-            }
-        });
-
-        formPanel.add(new JLabel("Username:"));
-        formPanel.add(usernameField);
-        formPanel.add(new JLabel("Password:"));
-        formPanel.add(passwordField);
-        formPanel.add(new JLabel("First Name (for welcome):")); //Display name to ng user
-        formPanel.add(firstNameField);
-        formPanel.add(new JLabel("Role:"));
-        formPanel.add(roleComboBox);
-        formPanel.add(new JLabel("Employee ID (for Employee role):")); //Important to, since this is needed if may add si employee ng hours on his/her own
-        formPanel.add(employeeIdField); //
-
-        // Initialize employeeIdField state based on default role
-        employeeIdField.setEnabled("Employee".equalsIgnoreCase((String) roleComboBox.getSelectedItem()));
-        if (!employeeIdField.isEnabled()) {
-            employeeIdField.setText("0"); // Default for non-employees
-        }
-
-
-        addUserPanel.add(formPanel, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(new Color(240, 248, 255));
-        JButton saveUserBtn = createStyledButton2("Save User Account");
-        JButton clearUserFormBtn = createStyledButton2("Clear Form");
-        JButton backBtn = createStyledButton2("Back to Main Menu");
-
-        saveUserBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String username = usernameField.getText().trim();
-                String password = new String(passwordField.getPassword()).trim();
-                String firstName = firstNameField.getText().trim();
-                String role = (String) roleComboBox.getSelectedItem();
-                String employeeIdText = employeeIdField.getText().trim(); // Get employee ID text
-
-                // Input validation for user account creation
-                if (username.isEmpty() || password.isEmpty() || firstName.isEmpty() || role.isEmpty()) {
-                    JOptionPane.showMessageDialog(addUserPanel, "All fields are required!", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (!username.matches("^[a-zA-Z0-9._-]+$")) {
-                    JOptionPane.showMessageDialog(addUserPanel, "Username can only contain letters, numbers, dots, underscores, and hyphens.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (password.length() < 6) {
-                    JOptionPane.showMessageDialog(addUserPanel, "Password must be at least 6 characters long.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                 if (!firstName.matches("[a-zA-Z ]+")) {
-                    JOptionPane.showMessageDialog(addUserPanel, "First Name should only contain alphabets and spaces.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                int employeeId = 0; // Default employeeId
-                if ("Employee".equalsIgnoreCase(role)) {
-                    if (employeeIdText.isEmpty()) {
-                        JOptionPane.showMessageDialog(addUserPanel, "Employee ID is required for Employee roles.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    try {
-                        employeeId = Integer.parseInt(employeeIdText);
-                        if (employeeId <= 0) {
-                            JOptionPane.showMessageDialog(addUserPanel, "Employee ID must be a positive number.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                            return;
-                        }
-
-                    } catch (NumberFormatException ex) {
-                        JOptionPane.showMessageDialog(addUserPanel, "Invalid Employee ID format. Please enter a number.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                }
-
-
-                try {
-                    boolean success = UserManager.getInstance().addUser(username, password, role, firstName, employeeId); // Pass employeeId
-                    if (success) {
-                        JOptionPane.showMessageDialog(addUserPanel, "User account for '" + username + "' created successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                        // Clear fields after successful addition
-                        usernameField.setText("");
-                        passwordField.setText("");
-                        firstNameField.setText("");
-                        employeeIdField.setText("0"); // Reset employeeId field
-                        employeeIdField.setEnabled(false); // Disable again
-                        roleComboBox.setSelectedIndex(0); // Reset to default role
-                    } else {
-                        JOptionPane.showMessageDialog(addUserPanel, "Failed to add user account. Username might already exist.", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                } catch (IOException ex) {
-                    Logger.getLogger(PayrollSystemGUI.class.getName()).log(Level.SEVERE, "Error adding user account", ex);
-                    JOptionPane.showMessageDialog(addUserPanel, "An error occurred while saving the user account: " + ex.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-
-        clearUserFormBtn.addActionListener(e -> {
-            usernameField.setText("");
-            passwordField.setText("");
-            firstNameField.setText("");
-            employeeIdField.setText("0"); // Clear employeeId field
-            employeeIdField.setEnabled(false); // Disable again
-            roleComboBox.setSelectedIndex(0);
-        });
-        backBtn.addActionListener(e -> showPanel("Welcome"));
-
-        buttonPanel.add(saveUserBtn);
-        buttonPanel.add(clearUserFormBtn);
-        buttonPanel.add(backBtn);
-        addUserPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        mainPanel.add(addUserPanel, "AddUser"); // Add the new panel to the CardLayout
-    } */
-
-
     //Panel for recording time in and time out
     private void setupAttendancePanel(int employeeId, String firstName, String lastName) {
              attendancePanel = new JPanel (new BorderLayout());
@@ -1371,6 +1186,8 @@ public class PayrollSystemGUI extends JFrame {
                         "Confirm Deletion", JOptionPane.YES_NO_OPTION);
                 if (confirmation == JOptionPane.YES_OPTION) {
                     employeeManager.deleteEmployee(id);
+                    attendanceManager.deleteRecord(id);
+                    userManager.deleteUser(id);
                     JOptionPane.showMessageDialog(null, "Employee deleted successfully.");
                 }
             } catch (NumberFormatException ex) {
