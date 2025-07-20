@@ -171,7 +171,6 @@ public class PayrollSystemGUI extends JFrame {
 
     } 
 
-
     // --- Panel Setups ---
 
     private void setupWelcomePanel() {
@@ -222,8 +221,7 @@ public class PayrollSystemGUI extends JFrame {
             imagePanel.add(imageLabel, BorderLayout.CENTER);
         }
         imageLabel.setLayout(null);
-
-
+        
         // Welcome Title Label
         welcomeTitleLabel = new JLabel("<html>WELCOME to<br>MotorPH Payroll System</html>", SwingConstants.LEFT);
         welcomeTitleLabel.setBounds(70, 210, 650, 100);
@@ -237,7 +235,6 @@ public class PayrollSystemGUI extends JFrame {
         userRoleLabel.setFont(new Font("Arial", Font.PLAIN, 20));
         userRoleLabel.setForeground(Color.WHITE);
         imageLabel.add(userRoleLabel);
-
 
         // Header Panel
         ImageIcon headerIcon = new ImageIcon("./resources/MotorPH.png");
@@ -364,8 +361,7 @@ public class PayrollSystemGUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "This function is only for Employees.", "Access Denied", JOptionPane.WARNING_MESSAGE);
             }
        });
-        
-
+       
         // Add buttons to the button panel
         buttonPanel.add(viewAllBtn);
         buttonPanel.add(addEmployeeBtn);
@@ -411,7 +407,6 @@ public class PayrollSystemGUI extends JFrame {
             System.out.println("DEBUG: PayrollSystemGUI - updateWelcomePanel. loggedInUser is null, displaying generic welcome.");
         }
     }
-
 
     private void setupViewAllEmployeesPanel() {
         viewAllEmployeesPanel = new JPanel(new BorderLayout(10, 10));
@@ -635,7 +630,6 @@ public class PayrollSystemGUI extends JFrame {
 
                      double netSalary = Motorphpayrollsystem.round(grossSalary - totalDeductions);
                      
-                     
                      //Display payslip
                      StringBuilder payslipText = new StringBuilder();
                      payslipText.append(String.format("--- Payslip for %s (ID: %d) ---%n", employee.getFullName(), employee.getEmployeeId()));
@@ -657,7 +651,6 @@ public class PayrollSystemGUI extends JFrame {
                      payslipText.append(String.format("  Withholding Tax: P %.2f%n", taxDeduction));
                      payslipText.append(String.format("Total Deductions: P %.2f%n", totalDeductions));
                      payslipText.append(String.format("NET SALARY: P %.2f%n", netSalary));
-                     
                      
                      // Display attendance breakdown after the payslip display
                      payslipText.append("\n----------------------------------------------------------\n");
@@ -910,8 +903,6 @@ public class PayrollSystemGUI extends JFrame {
                 }                
             }          
         });
-        
-       
 
         clearBtn.addActionListener(e -> clearForm(idField, firstNameField, lastNameField, birthdayField, positionField, hourlyRateField,
                                                  monthlySalaryField, sssNoField, philhealthNoField, tinField, pagibigNoField));
@@ -953,8 +944,7 @@ public class PayrollSystemGUI extends JFrame {
         JComboBox<String> roleComboBox = new JComboBox<>(new String[]{"Employee", "Manager", "HR", "IT Admin"});
         if (userToEdit != null) {
                 roleComboBox.setSelectedItem(userToEdit.getRole());
-        }       
-      
+        }    
 
         formPanel.add(new JLabel("First Name:"));
         formPanel.add(firstNameField);
@@ -1022,8 +1012,7 @@ public class PayrollSystemGUI extends JFrame {
                              return;
                          }
                          
-                         // Update User CSV
-                         
+                         // Update User CSV                         
                          boolean userUpdated = UserManager.getInstance().editUser(employeeToEdit.getEmployeeId(), newUsername, newPassword, newRole, newLastName, newFirstName);
                          
                          if (empUpdated && userUpdated){
@@ -1195,23 +1184,23 @@ public class PayrollSystemGUI extends JFrame {
     }
 
     private void delete () throws IOException {
-            String inputId = JOptionPane.showInputDialog("Enter Employee ID to delete:");
-            if (inputId == null || inputId.trim().isEmpty()) return;
-            try {
-                int id = Integer.parseInt(inputId);
-                int confirmation = JOptionPane.showConfirmDialog(null,
-                        "Are you sure you want to delete employee ID " + id + "?",
-                        "Confirm Deletion", JOptionPane.YES_NO_OPTION);
-                if (confirmation == JOptionPane.YES_OPTION) {
-                    employeeManager.deleteEmployee(id);
-                    attendanceManager.deleteRecord(id);
-                    userManager.deleteUser(id);
-                    JOptionPane.showMessageDialog(null, "Employee deleted successfully.");
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Invalid ID entered.", "Error", JOptionPane.ERROR_MESSAGE);
+        String inputId = JOptionPane.showInputDialog("Enter Employee ID to delete:");
+        if (inputId == null || inputId.trim().isEmpty()) return;
+        try {
+            int id = Integer.parseInt(inputId);
+            int confirmation = JOptionPane.showConfirmDialog(null,
+                    "Are you sure you want to delete employee ID " + id + "?",
+                    "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+            if (confirmation == JOptionPane.YES_OPTION) {
+                employeeManager.deleteEmployee(id);
+                attendanceManager.deleteRecord(id);
+                userManager.deleteUser(id);
+                JOptionPane.showMessageDialog(null, "Employee deleted successfully.");
             }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "Invalid ID entered.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
 
     private void displayEmployeeDetails(Employee employee) {
         StringBuilder details = new StringBuilder();
