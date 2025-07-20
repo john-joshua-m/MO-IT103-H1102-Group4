@@ -502,7 +502,7 @@ public class PayrollSystemGUI extends JFrame {
                String lastName = employeeTable.getValueAt(selectedRow, 2).toString();
 
                if (selectedEmp != null) {
-                   setupAttendancePanel(empId,firstName, lastName, "ViewAll");
+                   setupAttendancePanel(empId, firstName, lastName, "ViewAll");
                    showPanel("Attendance Record");
                } else {
                    JOptionPane.showMessageDialog(this, "Employee not found.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -1078,6 +1078,7 @@ public class PayrollSystemGUI extends JFrame {
 
              JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
              JButton saveButton = createStyledButton2("Save");
+             JButton clearBtn = createStyledButton2("Clear Form");
              JButton backButton = createStyledButton2("Back");
 
              saveButton.addActionListener(e -> {
@@ -1128,7 +1129,8 @@ public class PayrollSystemGUI extends JFrame {
                      AttendanceRecord record = new AttendanceRecord(employeeId, lastName, firstName, date, timeIn, timeOut);
                      boolean added = AttendanceManager.getInstance().addAttendanceRecord(record);
                      if (added) {
-                         JOptionPane.showMessageDialog(attendancePanel, "Attendance recorded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);                         
+                         JOptionPane.showMessageDialog(attendancePanel, "Attendance recorded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                         clearForm(dateField, timeInField, timeOutField);
                      } else {
                          JOptionPane.showMessageDialog(attendancePanel, "Attendance record for this employee on the specified date already exists.", "Record Already Exists", JOptionPane.WARNING_MESSAGE);
                      }
@@ -1136,9 +1138,12 @@ public class PayrollSystemGUI extends JFrame {
                      JOptionPane.showMessageDialog(attendancePanel, "Error: " + ex.getMessage(), "Input Error", JOptionPane.ERROR_MESSAGE);
                  }
              });
-
-             backButton.addActionListener(e -> goBack());
+             
+             clearBtn.addActionListener(e -> clearForm(dateField, timeInField, timeOutField));
+             backButton.addActionListener(e -> goBack());             
+             
              buttonPanel.add(saveButton);
+             buttonPanel.add(clearBtn);
              buttonPanel.add(backButton);
 
              attendancePanel.add(buttonPanel, BorderLayout.SOUTH);          
