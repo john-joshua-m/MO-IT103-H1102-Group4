@@ -30,6 +30,10 @@ public class PayrollSystemGUI extends JFrame {
     private DefaultTableModel tableModel;
     private JTable employeeTable;
     private JPanel mainPanel;
+    
+    // Specifically for navigation in Employees' view
+    private String currentPanel = "";
+    private String previousPanel = "";
 
     private User loggedInUser;
     private JLabel welcomeTitleLabel;
@@ -325,8 +329,7 @@ public class PayrollSystemGUI extends JFrame {
                 if (empId > 0) { // Check if a valid employeeId is linked
                     Employee employee = employeeManager.getEmployeeById(empId);
                     if (employee != null) { 
-                         setupAttendancePanel(empId, employee.getFirstName(), employee.getLastName());
-                         showPanel("Attendance Record");
+                         setupAttendancePanel(empId, employee.getFirstName(), employee.getLastName(), "Welcome");
                     } else {
                         // This case implies an employeeId is linked to the user account
                         // but no matching employee record is found in employees.csv
@@ -504,7 +507,7 @@ public class PayrollSystemGUI extends JFrame {
                String lastName = employeeTable.getValueAt(selectedRow, 2).toString();
 
                if (selectedEmp != null) {
-                   setupAttendancePanel(empId,firstName, lastName);
+                   setupAttendancePanel(empId,firstName, lastName, "ViewAll");
                    showPanel("Attendance Record");
                } else {
                    JOptionPane.showMessageDialog(this, "Employee not found.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -519,8 +522,6 @@ public class PayrollSystemGUI extends JFrame {
     }
 
     private void setupViewSpecificEmployeePanel(Employee employee, List<AttendanceRecord> attendanceRecords) {
-
-
              viewSpecificEmployeePanel = new JPanel(new BorderLayout(10, 10));
              viewSpecificEmployeePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
              viewSpecificEmployeePanel.setBackground(Color.WHITE);
@@ -658,7 +659,7 @@ public class PayrollSystemGUI extends JFrame {
                      payslipText.append(String.format("NET SALARY: P %.2f%n", netSalary));
                      
                      
-                     // Display attenddance breakdown after the payslip display
+                     // Display attendance breakdown after the payslip display
                      payslipText.append("\n----------------------------------------------------------\n");
                      payslipText.append("Attendance Records:\n");
                      payslipText.append(String.format("%-12s %-10s %-10s %-10s %-10s %-10s%n", 
@@ -678,8 +679,8 @@ public class PayrollSystemGUI extends JFrame {
                                  date, in, out, hours, mins, String.format("%d hrs %d mins", hours, mins)));
                      } 
 
-
                      payslipArea.setText(payslipText.toString());
+                     payslipArea.setCaretPosition(0); // To show the very beginning of the text area and not the end
 
                  } catch (Exception ex) {
                      payslipArea.setText("Invalid input. Please enter valid dates in MM/dd/yyyy format.");
@@ -1049,7 +1050,8 @@ public class PayrollSystemGUI extends JFrame {
     }
 
     //Panel for recording time in and time out
-    private void setupAttendancePanel(int employeeId, String firstName, String lastName) {
+    private void setupAttendancePanel(int employeeId, String firstName, String lastName, String fromPanel) {
+             previousPanel = fromPanel;
              attendancePanel = new JPanel (new BorderLayout());
 
              //Formatters for parsing date and time
@@ -1087,7 +1089,7 @@ public class PayrollSystemGUI extends JFrame {
 
              JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
              JButton saveButton = createStyledButton2("Save");
-             JButton backButton = createStyledButton2("Back to Employee List");
+             JButton backButton = createStyledButton2("Back");
 
              saveButton.addActionListener(e -> {
                  try {
@@ -1134,12 +1136,10 @@ public class PayrollSystemGUI extends JFrame {
                          return;
                      }
 
-
                      AttendanceRecord record = new AttendanceRecord(employeeId, lastName, firstName, date, timeIn, timeOut);
                      boolean added = AttendanceManager.getInstance().addAttendanceRecord(record);
                      if (added) {
-                         JOptionPane.showMessageDialog(attendancePanel, "Attendance recorded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                         showPanel("ViewAll"); // Go back to employee list
+                         JOptionPane.showMessageDialog(attendancePanel, "Attendance recorded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);                         
                      } else {
                          JOptionPane.showMessageDialog(attendancePanel, "Attendance record for this employee on the specified date already exists.", "Record Already Exists", JOptionPane.WARNING_MESSAGE);
                      }
@@ -1148,19 +1148,29 @@ public class PayrollSystemGUI extends JFrame {
                  }
              });
 
-             backButton.addActionListener(e -> showPanel("ViewAll"));
+             backButton.addActionListener(e -> goBack());
              buttonPanel.add(saveButton);
              buttonPanel.add(backButton);
 
-             attendancePanel.add(buttonPanel, BorderLayout.SOUTH);
+             attendancePanel.add(buttonPanel, BorderLayout.SOUTH);          
 
              mainPanel.add(attendancePanel, "Attendance Record");
+             showPanel("Attendance Record");
     }
 
     // --- Helper Methods ---
 
     private void showPanel(String panelName) {
         CardLayout cl = (CardLayout) (mainPanel.getLayout());
+        
+        // Save current as previous, then update current
+        // Added specifically to fix a minor navigation problem for Employee access
+        if (!panelName.equals(currentPanel)) {
+        if (previousPanel == null || previousPanel.isEmpty()) {
+            previousPanel = currentPanel;
+        }
+        currentPanel = panelName;
+    }
         cl.show(mainPanel, panelName);
 
         // Special actions when showing specific panels
@@ -1173,6 +1183,14 @@ public class PayrollSystemGUI extends JFrame {
         tableModel.setRowCount(0); // Clear existing data
         for (Employee employee : employeeManager.getEmployees()) {
             tableModel.addRow(employee.toCsvArray()); // Use the toCsvArray to get all data
+        }
+    }
+    
+    // Added specifically to fix a minor navigation problem for Employee access
+    private void goBack() {
+        System.out.println("Back button pressed. previousPanel = '" + previousPanel + "'");
+        if(!previousPanel.isEmpty()) {
+            showPanel(previousPanel);
         }
     }
 
