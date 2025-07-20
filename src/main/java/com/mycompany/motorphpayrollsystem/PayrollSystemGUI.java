@@ -1182,7 +1182,7 @@ public class PayrollSystemGUI extends JFrame {
     
     // Added specifically to fix a minor navigation problem for Employee access
     private void goBack() {
-        System.out.println("Back button pressed. previousPanel = '" + previousPanel + "'");
+        System.out.println("Back button pressed. Going back to '" + previousPanel + "' panel");
         if(!previousPanel.isEmpty()) {
             showPanel(previousPanel);
         }
