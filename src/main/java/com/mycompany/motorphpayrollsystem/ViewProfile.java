@@ -36,7 +36,7 @@ public class ViewProfile extends JFrame {
         add(titleLabel, BorderLayout.NORTH);
 
         employeeDetailsArea = new JTextArea(15, 40);
-        employeeDetailsArea.setFont(new Font("Arial", Font.PLAIN, 14));
+        employeeDetailsArea.setFont(new Font("Arial", Font.PLAIN, 25));
         employeeDetailsArea.setEditable(false);
         employeeDetailsArea.setLineWrap(true);
         employeeDetailsArea.setWrapStyleWord(true);
@@ -66,7 +66,6 @@ public class ViewProfile extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
         setLocationRelativeTo(null);
         setVisible(true);
-        
     }   
     
     private void displayEmployeeDetails(Employee employee) {
@@ -83,7 +82,4 @@ public class ViewProfile extends JFrame {
         details.append(String.format("Pag-IBIG No: %s%n", employee.getPagibigNo()));
         employeeDetailsArea.setText(details.toString());
     }
-
-    
-    
 }
