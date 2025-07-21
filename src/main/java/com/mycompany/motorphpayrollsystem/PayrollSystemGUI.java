@@ -297,10 +297,10 @@ public class PayrollSystemGUI extends JFrame {
         viewAllBtn = createStyledButton("View All Employees"); // Assigned to instance variable
         addEmployeeBtn = createStyledButton("Add New Employee"); // Assigned to instance variable
         deleteBtn = createStyledButton("Delete Employee"); // Assigned to instance variable
-        recordMyAttendanceBtn = createStyledButton("Record My Attendance"); // NEW Button
+        recordMyAttendanceBtn = createStyledButton("Record My Attendance"); 
         logoutBtn = createStyledButton("Logout");
         exitBtn = createStyledButton("Exit");
-        viewProfileBtn = createStyledButton("View Profile"); //NEW BUTTON
+        viewProfileBtn = createStyledButton("View Profile and Payslip"); //Updated the button name for clarity ng action
 
 
         // Add ActionListeners
