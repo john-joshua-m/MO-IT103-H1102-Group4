@@ -342,25 +342,23 @@ public class PayrollSystemGUI extends JFrame {
 
        // For View Profile Button
        viewProfileBtn.addActionListener (e -> {
-           if (loggedInUser != null && "Employee".equalsIgnoreCase(loggedInUser.getRole())) {
-               // Directly use the employeeId from the loggedInUser object
-                int empId = loggedInUser.getEmployeeId(); 
-                if (empId > 0) { // Check if a valid employeeId is linked
-                    Employee employee = employeeManager.getEmployeeById(empId);
-                    if (employee != null) { 
-                         new ViewProfile(loggedInUser, employeeManager);                        
-                    } else {
-                        // This case implies an employeeId is linked to the user account
-                        // but no matching employee record is found in employees.csv
-                        JOptionPane.showMessageDialog(this, "Your linked Employee ID (" + empId + ") was not found in the employee records. Please check your user account configuration.", "Data Mismatch Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                     JOptionPane.showMessageDialog(this, "Your user account is not linked to an Employee ID. Please contact HR/IT Admin to link your account to an employee record.", "Missing Employee ID", JOptionPane.WARNING_MESSAGE);
-                }
+    if (loggedInUser != null && "Employee".equalsIgnoreCase(loggedInUser.getRole())) {
+        int empId = loggedInUser.getEmployeeId();
+        if (empId > 0) {
+            Employee employee = employeeManager.getEmployeeById(empId);
+            if (employee != null) {
+                // The modified line is below:
+                new ViewProfile(loggedInUser, employeeManager).setVisible(true);
             } else {
-                JOptionPane.showMessageDialog(this, "This function is only for Employees.", "Access Denied", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Your linked Employee ID (" + empId + ") was not found in the employee records. Please check your user account configuration.", "Data Mismatch Error", JOptionPane.ERROR_MESSAGE);
             }
-       });
+        } else {
+            JOptionPane.showMessageDialog(this, "Your user account is not linked to an Employee ID. Please contact HR/IT Admin to link your account to an employee record.", "Missing Employee ID", JOptionPane.WARNING_MESSAGE);
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "This function is only for Employees.", "Access Denied", JOptionPane.WARNING_MESSAGE);
+    }
+});
        
         // Add buttons to the button panel
         buttonPanel.add(viewAllBtn);
