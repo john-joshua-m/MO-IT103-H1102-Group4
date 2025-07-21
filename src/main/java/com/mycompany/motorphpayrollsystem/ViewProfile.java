@@ -266,6 +266,7 @@ public class ViewProfile extends JFrame {
                         date, in, out, hours, mins, String.format("%d hrs %d mins", hours, mins)));
             }
             payslipArea.setText(payslipText.toString());
+            payslipArea.setCaretPosition(0); // To show the very beginning of the text area and not the end
 
         } catch (Exception ex) {
             payslipArea.setText("Error calculating payslip: " + ex.getMessage() + "\nPlease ensure all data is valid.");
